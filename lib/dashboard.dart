@@ -9,7 +9,7 @@ class TPKNilamLocation {
   static const double latitude = -7.2099123;
   static const double longitude = 112.7244489;
   static const LatLng coordinate = LatLng(latitude, longitude);
-  static const double defaultZoom = 15.5;
+  static const double defaultZoom = 16.5;
 }
 
 // Container Yards - sesuai layout gambar ilustrasi
@@ -146,6 +146,37 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  late MapController mapController;
+
+  @override
+  void initState() {
+    super.initState();
+    mapController = MapController();
+  }
+
+  // Network Status Counters
+  int get cy1OnlineTowers => 9; // T7-T19: 9 UP + 1 Warning
+  int get cy1TotalTowers => 10;
+  int get cy2OnlineTowers => 5; // T1-T6: 5 UP + 1 Warning
+  int get cy2TotalTowers => 6;
+  int get cy3OnlineTowers => 9; // T11-T21: 9 UP + 2 Warning
+  int get cy3TotalTowers => 11;
+
+  int get totalOnlineTowers =>
+      cy1OnlineTowers + cy2OnlineTowers + cy3OnlineTowers;
+  int get totalTowers => cy1TotalTowers + cy2TotalTowers + cy3TotalTowers;
+
+  // CCTV Status Counters (all pages combined)
+  int get totalUpCameras =>
+      38; // CY1: 21 UP, CY2: 7 UP, CY3: 17 UP, Parking: 3 UP, Gate: 2 UP
+  int get totalDownCameras => 3; // CY1: 1 DOWN, CY2: 1 DOWN, CY3: 1 DOWN
+  int get totalCameras => totalUpCameras + totalDownCameras;
+
+  void _centerMapToTPK() {
+    mapController.move(
+        TPKNilamLocation.coordinate, TPKNilamLocation.defaultZoom);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -343,21 +374,21 @@ class _DashboardPageState extends State<DashboardPage> {
               ],
             ),
             const SizedBox(height: 24),
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '27/27',
-                      style: TextStyle(
+                      '$totalOnlineTowers/$totalTowers',
+                      style: const TextStyle(
                         color: Colors.black,
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
+                    const Text(
                       'Towers Online',
                       style: TextStyle(
                         color: Colors.black54,
@@ -370,14 +401,14 @@ class _DashboardPageState extends State<DashboardPage> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '95%',
-                      style: TextStyle(
+                      '${((totalOnlineTowers / totalTowers) * 100).toStringAsFixed(0)}%',
+                      style: const TextStyle(
                         color: Colors.green,
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
+                    const Text(
                       'Signal Quality',
                       style: TextStyle(
                         color: Colors.black54,
@@ -440,8 +471,8 @@ class _DashboardPageState extends State<DashboardPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildCCTVStatus('30', 'Active', Colors.green),
-                _buildCCTVStatus('18', 'Offline', Colors.blue[800]!),
+                _buildCCTVStatus('$totalUpCameras', 'Active', Colors.green),
+                _buildCCTVStatus('$totalDownCameras', 'Offline', Colors.red),
               ],
             ),
           ],
@@ -585,170 +616,196 @@ class _DashboardPageState extends State<DashboardPage> {
               borderRadius: BorderRadius.circular(12),
             ),
             clipBehavior: Clip.hardEdge,
-            child: FlutterMap(
-              options: MapOptions(
-                initialCenter: TPKNilamLocation.coordinate,
-                initialZoom: TPKNilamLocation.defaultZoom,
-              ),
+            child: Stack(
               children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.monitoring',
-                ),
-                MarkerLayer(
-                  markers: [
-                    // Container Yards - Marker Besar (Clickable)
-                    ...containerYards.map((cy) => Marker(
-                          point: cy.coordinate,
-                          width: 120,
-                          height: 100,
-                          child: GestureDetector(
-                            onTap: () {
-                              _navigateToCCTV(context, cy.id);
-                            },
-                            child: MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: cy.color,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                          color: Colors.red, width: 2),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.4),
-                                          blurRadius: 6,
-                                          offset: const Offset(0, 3),
-                                        )
-                                      ],
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          cy.name,
+                FlutterMap(
+                  mapController: mapController,
+                  options: MapOptions(
+                    initialCenter: TPKNilamLocation.coordinate,
+                    initialZoom: TPKNilamLocation.defaultZoom,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.example.monitoring',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        // Container Yards - Marker Besar (Clickable)
+                        ...containerYards.map((cy) => Marker(
+                              point: cy.coordinate,
+                              width: 120,
+                              height: 100,
+                              child: GestureDetector(
+                                onTap: () {
+                                  _navigateToCCTV(context, cy.id);
+                                },
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: cy.color,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                              color: Colors.red, width: 2),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  Colors.black.withOpacity(0.4),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 3),
+                                            )
+                                          ],
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Text(
+                                              cy.name,
+                                              style: const TextStyle(
+                                                color: Colors.black87,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    Colors.red.withOpacity(0.8),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                cy.id,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )),
+
+                        // Tower/Access Points - Marker Kecil
+                        ...towerPoints.map((tower) => Marker(
+                              point: tower.coordinate,
+                              width: 35,
+                              height: 35,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF2196F3),
+                                  shape: BoxShape.circle,
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.3),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    )
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.router,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                            )),
+
+                        // Special Locations - Gate & Parking (Clickable)
+                        ...specialLocations.map((location) => Marker(
+                              point: location.coordinate,
+                              width: 60,
+                              height: 60,
+                              child: GestureDetector(
+                                onTap: () {
+                                  _navigateToSpecialLocation(
+                                      context, location.id);
+                                },
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: location.color,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                              color: Colors.white, width: 2),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  Colors.black.withOpacity(0.3),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            )
+                                          ],
+                                        ),
+                                        child: Icon(
+                                          location.icon,
+                                          color: Colors.white,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 4),
+                                        decoration: BoxDecoration(
+                                          color: location.color,
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          location.name,
                                           style: const TextStyle(
-                                            color: Colors.black87,
-                                            fontSize: 11,
+                                            color: Colors.white,
+                                            fontSize: 8,
                                             fontWeight: FontWeight.bold,
                                           ),
-                                          textAlign: TextAlign.center,
                                         ),
-                                        const SizedBox(height: 2),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red.withOpacity(0.8),
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            cy.id,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        )),
-
-                    // Tower/Access Points - Marker Kecil
-                    ...towerPoints.map((tower) => Marker(
-                          point: tower.coordinate,
-                          width: 35,
-                          height: 35,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2196F3),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                )
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.router,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                        )),
-
-                    // Special Locations - Gate & Parking (Clickable)
-                    ...specialLocations.map((location) => Marker(
-                          point: location.coordinate,
-                          width: 60,
-                          height: 60,
-                          child: GestureDetector(
-                            onTap: () {
-                              _navigateToSpecialLocation(context, location.id);
-                            },
-                            child: MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: location.color,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                          color: Colors.white, width: 2),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.3),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 2),
-                                        )
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      location.icon,
-                                      color: Colors.white,
-                                      size: 24,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4),
-                                    decoration: BoxDecoration(
-                                      color: location.color,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      location.name,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.bold,
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
-                        )),
+                            )),
+                      ],
+                    ),
                   ],
+                ),
+                // Center Map Button
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: FloatingActionButton(
+                    backgroundColor: const Color(0xFF1976D2),
+                    onPressed: _centerMapToTPK,
+                    tooltip: 'Center Map',
+                    child: const Icon(Icons.my_location, color: Colors.white),
+                  ),
                 ),
               ],
             ),

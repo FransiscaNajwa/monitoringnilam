@@ -237,6 +237,7 @@ class _AnimatedDropdownButtonState extends State<AnimatedDropdownButton>
   bool _isOpen = false;
   OverlayEntry? _overlayEntry;
   final LayerLink _layerLink = LayerLink();
+  String? _hoveredItem;
 
   @override
   void initState() {
@@ -318,24 +319,41 @@ class _AnimatedDropdownButtonState extends State<AnimatedDropdownButton>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: widget.items.map((item) {
-                          return InkWell(
-                            onTap: () => _selectItem(item),
-                            splashColor: Colors.white.withOpacity(0.3),
-                            highlightColor: Colors.white.withOpacity(0.1),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
-                              ),
-                              child: Text(
-                                item,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: item == widget.value
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
+                          return MouseRegion(
+                            onEnter: (_) {
+                              setState(() {
+                                _hoveredItem = item;
+                              });
+                            },
+                            onExit: (_) {
+                              setState(() {
+                                _hoveredItem = null;
+                              });
+                            },
+                            cursor: SystemMouseCursors.click,
+                            child: InkWell(
+                              onTap: () => _selectItem(item),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _hoveredItem == item
+                                      ? Colors.blue.withOpacity(0.6)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  item,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: item == widget.value
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
                                 ),
                               ),
                             ),
