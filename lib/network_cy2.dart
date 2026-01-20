@@ -244,6 +244,35 @@ class _NetworkCY2PageState extends State<NetworkCY2Page> {
           _buildHeaderButton('Logout', () {
             _showLogoutDialog(context);
           }, isActive: false),
+          const SizedBox(width: 12),
+          // Profile icon shortcut to profile page
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () {
+                navigateWithLoading(context, '/profile');
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(50),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.person,
+                  color: Color(0xFF1976D2),
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
