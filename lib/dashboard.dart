@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'main.dart';
+import 'services/api_service.dart';
+import 'models/camera_model.dart';
+import 'models/tower_model.dart';
+import 'models/alert_model.dart';
 
 // Konstanta lokasi TPK Nilam - sesuai layout gambar
 class TPKNilamLocation {
@@ -148,28 +152,51 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   late MapController mapController;
 
+  late ApiService apiService;
+  List<Camera> cameras = [];
+  List<Tower> towers = [];
+  List<Alert> alerts = [];
+  int totalUpCameras = 0;
+  int totalDownCameras = 0;
+  int totalOnlineTowers = 0;
+  int totalTowers = 0;
+
   @override
   void initState() {
     super.initState();
     mapController = MapController();
+    apiService = ApiService();
+    _loadDashboardData();
   }
 
-  // Network Status Counters
-  int get cy1OnlineTowers => 9; // T7-T19: 9 UP + 1 Warning
-  int get cy1TotalTowers => 10;
-  int get cy2OnlineTowers => 5; // T1-T6: 5 UP + 1 Warning
-  int get cy2TotalTowers => 6;
-  int get cy3OnlineTowers => 9; // T11-T21: 9 UP + 2 Warning
-  int get cy3TotalTowers => 11;
+  Future<void> _loadDashboardData() async {
+    try {
+      // Load cameras data
+      final fetchedCameras = await apiService.getAllCameras();
+      setState(() {
+        cameras = fetchedCameras;
+        totalUpCameras = cameras.where((c) => c.status == 'UP').length;
+        totalDownCameras = cameras.where((c) => c.status == 'DOWN').length;
+      });
 
-  int get totalOnlineTowers =>
-      cy1OnlineTowers + cy2OnlineTowers + cy3OnlineTowers;
-  int get totalTowers => cy1TotalTowers + cy2TotalTowers + cy3TotalTowers;
+      // Load towers data
+      final fetchedTowers = await apiService.getAllTowers();
+      setState(() {
+        towers = fetchedTowers;
+        totalOnlineTowers = towers.where((t) => t.status == 'UP').length;
+        totalTowers = towers.length;
+      });
 
-  // CCTV Status Counters (all pages combined)
-  int get totalUpCameras =>
-      38; // CY1: 21 UP, CY2: 7 UP, CY3: 17 UP, Parking: 3 UP, Gate: 2 UP
-  int get totalDownCameras => 3; // CY1: 1 DOWN, CY2: 1 DOWN, CY3: 1 DOWN
+      // Load alerts data
+      final fetchedAlerts = await apiService.getAllAlerts();
+      setState(() {
+        alerts = fetchedAlerts;
+      });
+    } catch (e) {
+      print('Error loading dashboard data: $e');
+    }
+  }
+
   int get totalCameras => totalUpCameras + totalDownCameras;
 
   void _centerMapToTPK() {
@@ -179,6 +206,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = isMobileScreen(context);
     return Scaffold(
       backgroundColor: const Color(0xFF2C3E50),
       body: Column(
@@ -191,7 +219,7 @@ class _DashboardPageState extends State<DashboardPage> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: EdgeInsets.all(isMobile ? 8 : 16.0),
                     child: _buildContent(context, constraints),
                   );
                 },
@@ -471,8 +499,8 @@ class _DashboardPageState extends State<DashboardPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildCCTVStatus('$totalUpCameras', 'Active', Colors.green),
-                _buildCCTVStatus('$totalDownCameras', 'Offline', Colors.red),
+                _buildCCTVStatus('$totalUpCameras', 'UP', Colors.green),
+                _buildCCTVStatus('$totalDownCameras', 'DOWN', Colors.red),
               ],
             ),
           ],
@@ -513,6 +541,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildActiveAlertsCard(BuildContext context) {
+    int criticalAlerts = alerts.where((a) => a.severity == 'critical').length;
+    int warningAlerts = alerts.where((a) => a.severity == 'warning').length;
+    int totalAlerts = alerts.length;
+
     return InkWell(
       onTap: () {
         navigateWithLoading(context, '/alerts');
@@ -555,15 +587,39 @@ class _DashboardPageState extends State<DashboardPage> {
               ],
             ),
             const SizedBox(height: 16),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '• CCTV 12 lost connections',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 16,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Critical: $criticalAlerts',
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Total: $totalAlerts',
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  'Warning: $warningAlerts',
+                  style: const TextStyle(
+                    color: Colors.orange,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -914,12 +970,13 @@ class _DashboardPageState extends State<DashboardPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
+        title: const Text('Logout', style: TextStyle(color: Colors.black87)),
+        content: const Text('Apakah Anda yakin ingin keluar?',
+            style: TextStyle(color: Colors.black87)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: const Text('Batal', style: TextStyle(color: Colors.black87)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -932,6 +989,7 @@ class _DashboardPageState extends State<DashboardPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Logout'),
           ),

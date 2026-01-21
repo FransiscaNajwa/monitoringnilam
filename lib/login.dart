@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'main.dart';
+import 'services/api_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -9,14 +11,21 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  late ApiService apiService;
+
+  @override
+  void initState() {
+    super.initState();
+    apiService = ApiService();
+  }
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -27,16 +36,44 @@ class _LoginPageState extends State<LoginPage> {
         _isLoading = true;
       });
 
-      // Simulasi login
-      await Future.delayed(const Duration(seconds: 1));
+      try {
+        final response = await apiService.login(
+          _usernameController.text,
+          _passwordController.text,
+        );
 
-      setState(() {
-        _isLoading = false;
-      });
+        setState(() {
+          _isLoading = false;
+        });
 
-      // Navigate to dashboard
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        if (response['success'] == true) {
+          // Navigate to dashboard
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          }
+        } else {
+          // Show error message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(response['message'] ?? 'Login failed'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -48,6 +85,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = isMobileScreen(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -68,8 +106,8 @@ class _LoginPageState extends State<LoginPage> {
 
           // Logo Danantara Indonesia - Kiri Atas
           Positioned(
-            left: 20,
-            top: 20,
+            left: isMobile ? 10 : 20,
+            top: isMobile ? 10 : 20,
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -154,12 +192,12 @@ class _LoginPageState extends State<LoginPage> {
 
                               const SizedBox(height: 40),
 
-                              // Email Field
+                              // Username Field
                               TextFormField(
-                                controller: _emailController,
-                                keyboardType: TextInputType.emailAddress,
+                                controller: _usernameController,
+                                keyboardType: TextInputType.text,
                                 decoration: InputDecoration(
-                                  hintText: 'Email Address',
+                                  hintText: 'Username',
                                   filled: true,
                                   fillColor: Colors.grey[100],
                                   border: OutlineInputBorder(
@@ -173,10 +211,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter your email';
-                                  }
-                                  if (!value.contains('@')) {
-                                    return 'Please enter a valid email';
+                                    return 'Please enter your username';
                                   }
                                   return null;
                                 },
@@ -268,8 +303,8 @@ class _LoginPageState extends State<LoginPage> {
                                   const Text(
                                     'No Account?',
                                     style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.red,
+                                      fontSize: 20,
+                                      color: Color.fromARGB(255, 255, 255, 255),
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),

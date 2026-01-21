@@ -61,6 +61,34 @@ Future<void> navigateWithLoading(BuildContext context, String routeName) async {
   Navigator.pushReplacementNamed(context, routeName);
 }
 
+// Responsive helper functions
+bool isMobileScreen(BuildContext context) {
+  return MediaQuery.of(context).size.width < 600;
+}
+
+double getResponsivePadding(BuildContext context) {
+  final isMobile = isMobileScreen(context);
+  return isMobile ? 8.0 : 16.0;
+}
+
+double getResponsiveFontSize(
+    BuildContext context, double mobileSize, double desktopSize) {
+  final isMobile = isMobileScreen(context);
+  return isMobile ? mobileSize : desktopSize;
+}
+
+int getResponsiveGridColumns(BuildContext context,
+    {int mobileColumns = 1, int desktopColumns = 3}) {
+  final isMobile = isMobileScreen(context);
+  return isMobile ? mobileColumns : desktopColumns;
+}
+
+double getResponsiveChildAspectRatio(BuildContext context,
+    {double mobileRatio = 0.9, double desktopRatio = 1.2}) {
+  final isMobile = isMobileScreen(context);
+  return isMobile ? mobileRatio : desktopRatio;
+}
+
 // Helper function untuk membuat liquid glass button dengan hover effect
 Widget buildLiquidGlassButton(String text, VoidCallback onPressed,
     {bool isActive = false}) {

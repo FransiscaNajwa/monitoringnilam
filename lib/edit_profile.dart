@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'main.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({Key? key}) : super(key: key);
@@ -15,8 +16,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   late TextEditingController _locationController;
-  late TextEditingController _officeController;
-  late TextEditingController _departmentController;
+  late TextEditingController _divisionController;
 
   bool _isLoading = false;
 
@@ -28,9 +28,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _emailController = TextEditingController(text: 'admin@terminalnilam.id');
     _phoneController = TextEditingController(text: '+62 812-3456-7890');
     _locationController = TextEditingController(text: 'Surabaya, Jawa Timur');
-    _officeController =
-        TextEditingController(text: 'Terminal Nilam, Building A, Floor 3');
-    _departmentController =
+    _divisionController =
         TextEditingController(text: 'IT & Network Management');
   }
 
@@ -41,8 +39,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _emailController.dispose();
     _phoneController.dispose();
     _locationController.dispose();
-    _officeController.dispose();
-    _departmentController.dispose();
+    _divisionController.dispose();
     super.dispose();
   }
 
@@ -74,6 +71,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = isMobileScreen(context);
     return Scaffold(
       backgroundColor: const Color(0xFF2C3E50),
       body: Column(
@@ -84,10 +82,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: EdgeInsets.all(isMobile ? 8 : 24.0),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
+                    constraints: BoxConstraints(
+                        maxWidth: isMobile ? double.infinity : 600),
                     child: _buildContent(),
                   ),
                 ),
@@ -250,24 +249,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
                 const SizedBox(height: 20),
                 _buildTextField(
-                  'Kantor',
-                  _officeController,
-                  Icons.business,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Kantor tidak boleh kosong';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                _buildTextField(
-                  'Departemen',
-                  _departmentController,
+                  'Divisi',
+                  _divisionController,
                   Icons.domain,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Departemen tidak boleh kosong';
+                      return 'Divisi tidak boleh kosong';
                     }
                     return null;
                   },

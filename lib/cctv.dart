@@ -72,14 +72,24 @@ class _CCTVPageState extends State<CCTVPage> {
       'status': 'DOWN',
       'type': 'Fixed'
     },
-    {'id': 'Cam-13', 'location': 'Loading Dock', 'status': 'UP', 'type': 'PTZ'},
+    {
+      'id': 'Cam-13',
+      'location': 'Loading Dock',
+      'status': 'DOWN',
+      'type': 'PTZ'
+    },
     {
       'id': 'Cam-14',
       'location': 'Loading Dock',
       'status': 'UP',
       'type': 'Fixed'
     },
-    {'id': 'Cam-15', 'location': 'Office Area', 'status': 'UP', 'type': 'PTZ'},
+    {
+      'id': 'Cam-15',
+      'location': 'Office Area',
+      'status': 'DOWN',
+      'type': 'PTZ'
+    },
     {
       'id': 'Cam-16',
       'location': 'Office Area',
@@ -115,13 +125,13 @@ class _CCTVPageState extends State<CCTVPage> {
     {
       'id': 'Cam-23',
       'location': 'Container Yard 1',
-      'status': 'Active',
+      'status': 'UP',
       'type': 'PTZ'
     },
     {
       'id': 'Cam-24',
       'location': 'Container Yard 1',
-      'status': 'Active',
+      'status': 'UP',
       'type': 'Fixed'
     },
   ];
@@ -235,6 +245,7 @@ class _CCTVPageState extends State<CCTVPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = isMobileScreen(context);
     return Scaffold(
       backgroundColor: const Color(0xFF2C3E50),
       body: Column(
@@ -245,7 +256,7 @@ class _CCTVPageState extends State<CCTVPage> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: EdgeInsets.all(isMobile ? 8 : 20.0),
                     child: _buildContent(context, constraints),
                   );
                 },
@@ -259,68 +270,128 @@ class _CCTVPageState extends State<CCTVPage> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final isMobile = isMobileScreen(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 8 : 24, vertical: isMobile ? 10 : 16),
       color: const Color(0xFF1976D2),
-      child: Row(
-        children: [
-          const Text(
-            'Terminal Nilam',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(),
-          _buildHeaderButton('Dashboard', () {
-            navigateWithLoading(context, '/dashboard');
-          }),
-          const SizedBox(width: 12),
-          _buildHeaderButton('Network', () {
-            navigateWithLoading(context, '/network');
-          }),
-          const SizedBox(width: 12),
-          _buildHeaderButton('CCTV', () {}, isActive: true),
-          const SizedBox(width: 12),
-          _buildHeaderButton('Alerts', () {
-            navigateWithLoading(context, '/alerts');
-          }),
-          const SizedBox(width: 12),
-          _buildHeaderButton('Logout', () {
-            _showLogoutDialog(context);
-          }),
-          const SizedBox(width: 12),
-          // Profile Icon
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () {
-                navigateWithLoading(context, '/profile');
-              },
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(50),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      spreadRadius: 1,
+      child: isMobile
+          ? Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Terminal Nilam',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isMobile ? 18 : 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () {
+                          navigateWithLoading(context, '/profile');
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: const Icon(
+                            Icons.person,
+                            color: Color(0xFF1976D2),
+                            size: 20,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.person,
-                  color: Color(0xFF1976D2),
-                  size: 24,
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [
+                    _buildHeaderButton('Dashboard', () {
+                      navigateWithLoading(context, '/dashboard');
+                    }),
+                    _buildHeaderButton('Network', () {
+                      navigateWithLoading(context, '/network');
+                    }),
+                    _buildHeaderButton('CCTV', () {}, isActive: true),
+                    _buildHeaderButton('Alerts', () {
+                      navigateWithLoading(context, '/alerts');
+                    }),
+                    _buildHeaderButton('Logout', () {
+                      _showLogoutDialog(context);
+                    }),
+                  ],
+                )
+              ],
+            )
+          : Row(
+              children: [
+                const Text(
+                  'Terminal Nilam',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
+                const Spacer(),
+                _buildHeaderButton('Dashboard', () {
+                  navigateWithLoading(context, '/dashboard');
+                }),
+                const SizedBox(width: 12),
+                _buildHeaderButton('Network', () {
+                  navigateWithLoading(context, '/network');
+                }),
+                const SizedBox(width: 12),
+                _buildHeaderButton('CCTV', () {}, isActive: true),
+                const SizedBox(width: 12),
+                _buildHeaderButton('Alerts', () {
+                  navigateWithLoading(context, '/alerts');
+                }),
+                const SizedBox(width: 12),
+                _buildHeaderButton('Logout', () {
+                  _showLogoutDialog(context);
+                }),
+                const SizedBox(width: 12),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () {
+                      navigateWithLoading(context, '/profile');
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(50),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.person,
+                        color: Color(0xFF1976D2),
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -330,69 +401,123 @@ class _CCTVPageState extends State<CCTVPage> {
   }
 
   Widget _buildContent(BuildContext context, BoxConstraints constraints) {
+    final isMobile = isMobileScreen(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Title Section
-        const Row(
-          children: [
-            Icon(Icons.videocam, size: 40, color: Colors.white),
-            SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'CCTV Monitoring',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+        if (isMobile)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.videocam, size: 28, color: Colors.white),
+              const SizedBox(height: 8),
+              const Text(
+                'CCTV',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
-                SizedBox(height: 4),
-                Text(
-                  'Live camera feeds and surveillance system status',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+              ),
+              const Text(
+                'Live monitoring',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
                 ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
+              ),
+            ],
+          )
+        else
+          const Row(
+            children: [
+              Icon(Icons.videocam, size: 40, color: Colors.white),
+              SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'CCTV Monitoring',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Live camera feeds and surveillance system status',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        const SizedBox(height: 16),
 
-        // Stats Cards Row
+        // Stats Cards Row with Dropdown
         LayoutBuilder(
           builder: (context, constraints) {
-            double cardWidth = constraints.maxWidth > 1400
-                ? (constraints.maxWidth - 100) / 5
-                : (constraints.maxWidth - 80) / 3;
+            double cardWidth = isMobile
+                ? (constraints.maxWidth - 16) / 1.5
+                : constraints.maxWidth > 1400
+                    ? (constraints.maxWidth - 100) / 5
+                    : (constraints.maxWidth - 80) / 3;
 
-            return Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: [
-                _buildStatCard('Total Camera', '${allCameras.length}',
-                    Colors.orange, cardWidth),
-                _buildStatCard('UP', '$upCameras', Colors.green, cardWidth),
-                GestureDetector(
-                  onTap: _showOfflineList,
-                  child: _buildStatCard(
-                      'DOWN', '$downCameras', Colors.red, cardWidth),
-                ),
-                _buildCCTVDropdown(cardWidth),
-                _buildContainerYardButton(cardWidth),
-              ],
-            );
+            return isMobile
+                ? Column(
+                    children: [
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildStatCard(
+                                'Total Camera',
+                                '${allCameras.length}',
+                                Colors.orange,
+                                cardWidth),
+                            SizedBox(width: isMobile ? 8 : 16),
+                            _buildStatCard(
+                                'UP', '$upCameras', Colors.green, cardWidth),
+                            SizedBox(width: isMobile ? 8 : 16),
+                            GestureDetector(
+                              onTap: _showOfflineList,
+                              child: _buildStatCard('DOWN', '$downCameras',
+                                  Colors.red, cardWidth),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildCCTVDropdown(constraints.maxWidth),
+                      const SizedBox(height: 12),
+                      _buildContainerYardButton(constraints.maxWidth),
+                    ],
+                  )
+                : Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    children: [
+                      _buildStatCard('Total Camera', '${allCameras.length}',
+                          Colors.orange, cardWidth),
+                      _buildStatCard(
+                          'UP', '$upCameras', Colors.green, cardWidth),
+                      GestureDetector(
+                        onTap: _showOfflineList,
+                        child: _buildStatCard(
+                            'DOWN', '$downCameras', Colors.red, cardWidth),
+                      ),
+                      _buildCCTVDropdown(cardWidth),
+                      _buildContainerYardButton(cardWidth),
+                    ],
+                  );
           },
         ),
-        const SizedBox(height: 24),
-
-        // Filter Section
-        _buildFilterSection(),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
         // Camera Grid
         _buildCameraGrid(constraints),
@@ -406,57 +531,63 @@ class _CCTVPageState extends State<CCTVPage> {
 
   Widget _buildStatCard(
       String title, String value, Color indicatorColor, double width) {
-    return Container(
-      width: width,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = isMobileScreen(context);
+        return Container(
+          width: width,
+          padding: EdgeInsets.all(isMobile ? 12 : 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: indicatorColor,
-                  shape: BoxShape.circle,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: isMobile ? 12 : 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    width: isMobile ? 10 : 12,
+                    height: isMobile ? 10 : 12,
+                    decoration: BoxDecoration(
+                      color: indicatorColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: isMobile ? 8 : 12),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: isMobile ? 20 : 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -535,90 +666,27 @@ class _CCTVPageState extends State<CCTVPage> {
     );
   }
 
-  Widget _buildFilterSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          const Text(
-            'Filter by:',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          _buildFilterButton('All Locations', false),
-          _buildFilterButton('All Status', false),
-          _buildFilterButton('All Type', false),
-          _buildFilterButton('Fullscreen', false),
-          const Spacer(),
-          SizedBox(
-            width: 250,
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search camera...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterButton(String text, bool isActive) {
-    return ElevatedButton(
-      onPressed: () {},
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF1976D2),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(25),
-        ),
-      ),
-      child: Text(text),
-    );
-  }
-
   Widget _buildCameraGrid(BoxConstraints constraints) {
-    int crossAxisCount = constraints.maxWidth > 1400
-        ? 4
-        : constraints.maxWidth > 1000
-            ? 3
-            : constraints.maxWidth > 600
-                ? 2
-                : 1;
+    final isMobile = isMobileScreen(context);
+    int crossAxisCount = isMobile
+        ? 1
+        : constraints.maxWidth > 1400
+            ? 4
+            : constraints.maxWidth > 1000
+                ? 3
+                : 2;
+
+    double childAspectRatio = isMobile ? 1.0 : 1.2;
+    double spacing = isMobile ? 8 : 20;
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 20,
-        mainAxisSpacing: 20,
-        childAspectRatio: 1.2,
+        crossAxisSpacing: spacing,
+        mainAxisSpacing: spacing,
+        childAspectRatio: childAspectRatio,
       ),
       itemCount: paginatedCameras.length,
       itemBuilder: (context, index) {
@@ -804,12 +872,13 @@ class _CCTVPageState extends State<CCTVPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
+        title: const Text('Logout', style: TextStyle(color: Colors.black87)),
+        content: const Text('Apakah Anda yakin ingin keluar?',
+            style: TextStyle(color: Colors.black87)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: const Text('Batal', style: TextStyle(color: Colors.black87)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -822,6 +891,7 @@ class _CCTVPageState extends State<CCTVPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Logout'),
           ),

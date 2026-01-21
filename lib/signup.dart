@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'main.dart';
+import 'services/api_service.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({Key? key}) : super(key: key);
@@ -9,6 +11,7 @@ class SignUpPage extends StatefulWidget {
 
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -16,9 +19,17 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+  late ApiService apiService;
+
+  @override
+  void initState() {
+    super.initState();
+    apiService = ApiService();
+  }
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -32,28 +43,69 @@ class _SignUpPageState extends State<SignUpPage> {
         _isLoading = true;
       });
 
-      // Simulasi sign up
-      await Future.delayed(const Duration(seconds: 1));
+      // Debug: print data yang akan dikirim
+      print('Username: ${_usernameController.text}');
+      print('Email: ${_emailController.text}');
+      print('Password: ${_passwordController.text}');
+      print('Full Name: ${_nameController.text}');
 
-      setState(() {
-        _isLoading = false;
-      });
-
-      // Show success message and navigate back to login
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Account created successfully! Please login.'),
-            backgroundColor: Colors.green,
-          ),
+      try {
+        final response = await apiService.register(
+          _usernameController.text.trim(),
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+          _nameController.text.trim(),
         );
-        Navigator.pop(context);
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (response['success'] == true) {
+          // Show success message and navigate back to login
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Account created successfully! Please login.'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pop(context);
+          }
+        } else {
+          // Show error message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(response['message'] ?? 'Registration failed'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
 
+  void _handleBackToLogin() {
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isMobile = isMobileScreen(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -74,8 +126,8 @@ class _SignUpPageState extends State<SignUpPage> {
 
           // Logo Danantara Indonesia - Kiri Atas
           Positioned(
-            left: 20,
-            top: 20,
+            left: isMobile ? 10 : 20,
+            top: isMobile ? 10 : 20,
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -160,11 +212,11 @@ class _SignUpPageState extends State<SignUpPage> {
 
                               const SizedBox(height: 40),
 
-                              // Name Field
+                              // Username Field
                               TextFormField(
-                                controller: _nameController,
+                                controller: _usernameController,
                                 decoration: InputDecoration(
-                                  hintText: 'Name',
+                                  hintText: 'Username',
                                   filled: true,
                                   fillColor: Colors.grey[100],
                                   border: OutlineInputBorder(
@@ -178,7 +230,33 @@ class _SignUpPageState extends State<SignUpPage> {
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter your name';
+                                    return 'Please enter your username';
+                                  }
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              // Name Field
+                              TextFormField(
+                                controller: _nameController,
+                                decoration: InputDecoration(
+                                  hintText: 'Full Name',
+                                  filled: true,
+                                  fillColor: Colors.grey[100],
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(50),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 20,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your full name';
                                   }
                                   return null;
                                 },
@@ -355,7 +433,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                         text: 'Login',
                                         style: TextStyle(
                                           fontSize: 20,
-                                          color: Color.fromARGB(255, 255, 255, 255),
+                                          color: Color.fromARGB(
+                                              255, 255, 255, 255),
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'main.dart';
+import 'services/api_service.dart';
+import 'models/alert_model.dart';
 
 // Alerts & Notification Page
 class AlertsPage extends StatefulWidget {
@@ -10,105 +12,104 @@ class AlertsPage extends StatefulWidget {
 }
 
 class _AlertsPageState extends State<AlertsPage> {
-  final List<Map<String, dynamic>> alerts = [
+  late ApiService apiService;
+  List<Alert> alerts = [];
+  bool isLoading = true;
+  final List<Map<String, dynamic>> alertsOld = [
     {
-      'title': 'CCTV camera offline',
-      'description': 'CAM-GATE-A lost connection',
+      'title': 'CCTV DOWN - CY1 Cam-12',
+      'description': 'Parking Area (CY1) camera offline (Cam-12)',
       'severity': 'critical',
       'timestamp': '5 minutes ago',
+      'route': '/cctv',
     },
     {
-      'title': 'Container yard near capacity',
-      'description': 'Yard 3 at 89% capacity (287/300 slot)',
-      'severity': 'warning',
-      'timestamp': '12 minutes ago',
+      'title': 'CCTV DOWN - CY1 Cam-13',
+      'description': 'Loading Dock (CY1) camera offline (Cam-13)',
+      'severity': 'critical',
+      'timestamp': '4 minutes ago',
+      'route': '/cctv',
     },
     {
-      'title': 'High network latency detected',
-      'description': 'Tower T3 experiencing latency of 45 ms',
+      'title': 'CCTV DOWN - CY1 Cam-15',
+      'description': 'Office Area (CY1) camera offline (Cam-15)',
+      'severity': 'critical',
+      'timestamp': '3 minutes ago',
+      'route': '/cctv',
+    },
+    {
+      'title': 'CCTV DOWN - CY2 Cam-31',
+      'description': 'Container Yard 2 camera offline (Cam-31)',
+      'severity': 'critical',
+      'timestamp': '10 minutes ago',
+      'route': '/cctv-cy2',
+    },
+    {
+      'title': 'CCTV DOWN - CY3 Cam-16',
+      'description': 'Container Yard 3 camera offline (Cam-16)',
+      'severity': 'critical',
+      'timestamp': '18 minutes ago',
+      'route': '/cctv-cy3',
+    },
+    {
+      'title': 'Tower WARNING - CY1 T10',
+      'description': 'Tower T10 (CY1) latency/packet loss detected',
       'severity': 'warning',
       'timestamp': '23 minutes ago',
+      'route': '/network',
     },
     {
-      'title': 'Camera maintenance schedule',
-      'description': 'CAM-Y3-01 schedule for maintenance today at 14:00',
-      'severity': 'info',
+      'title': 'Tower WARNING - CY2 T3',
+      'description': 'Tower T3 (CY2) degraded performance',
+      'severity': 'warning',
+      'timestamp': '45 minutes ago',
+      'route': '/network-cy2',
+    },
+    {
+      'title': 'Tower WARNING - CY3 T14',
+      'description': 'Tower T14 (CY3) degraded performance',
+      'severity': 'warning',
       'timestamp': '1 hour ago',
+      'route': '/network-cy3',
     },
     {
-      'title': 'CCTV camera offline',
-      'description': 'CAM-GATE-B lost connection',
-      'severity': 'critical',
-      'timestamp': '2 hours ago',
-    },
-    {
-      'title': 'Access switch high CPU',
-      'description': 'Switch SW-12 at 92% CPU utilization',
+      'title': 'Tower WARNING - CY3 T16',
+      'description': 'Tower T16 (CY3) degraded performance',
       'severity': 'warning',
-      'timestamp': '2 hours ago',
-    },
-    {
-      'title': 'Unauthorized access attempt',
-      'description': '3 failed login attempts detected on NMS',
-      'severity': 'critical',
-      'timestamp': '3 hours ago',
-    },
-    {
-      'title': 'Packet loss detected',
-      'description': 'Tower T9 reporting 8% packet loss',
-      'severity': 'warning',
-      'timestamp': '3 hours ago',
-    },
-    {
-      'title': 'Firmware update available',
-      'description': 'CCTV batch Y2 ready for firmware 3.2.1',
-      'severity': 'info',
-      'timestamp': '4 hours ago',
-    },
-    {
-      'title': 'Power source unstable',
-      'description': 'UPS-05 on battery for 12 minutes',
-      'severity': 'warning',
-      'timestamp': '4 hours ago',
-    },
-    {
-      'title': 'Link down detected',
-      'description': 'Fiber link CY2-T4 to core is down',
-      'severity': 'critical',
-      'timestamp': '4 hours ago',
-    },
-    {
-      'title': 'Storage threshold reached',
-      'description': 'NVR-02 storage at 91% usage',
-      'severity': 'warning',
-      'timestamp': '5 hours ago',
-    },
-    {
-      'title': 'Temperature high',
-      'description': 'Rack R3 temperature at 37°C',
-      'severity': 'warning',
-      'timestamp': '6 hours ago',
+      'timestamp': '1 hour ago',
+      'route': '/network-cy3',
     },
   ];
 
-  late int criticalCount;
-  late int warningCount;
-  late int infoCount;
+  int get criticalCount => alerts.where((a) => a.severity == 'critical').length;
+  int get warningCount => alerts.where((a) => a.severity == 'warning').length;
+  int get infoCount => alerts.where((a) => a.severity == 'info').length;
 
   @override
   void initState() {
     super.initState();
-    _calculateAlertStats();
+    apiService = ApiService();
+    _loadAlerts();
   }
 
-  void _calculateAlertStats() {
-    criticalCount = alerts.where((a) => a['severity'] == 'critical').length;
-    warningCount = alerts.where((a) => a['severity'] == 'warning').length;
-    infoCount = alerts.where((a) => a['severity'] == 'info').length;
+  Future<void> _loadAlerts() async {
+    try {
+      final fetchedAlerts = await apiService.getAllAlerts();
+      setState(() {
+        alerts = fetchedAlerts;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading alerts: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = isMobileScreen(context);
     return Scaffold(
       backgroundColor: const Color(0xFF2C3E50),
       body: Column(
@@ -119,7 +120,7 @@ class _AlertsPageState extends State<AlertsPage> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: EdgeInsets.all(isMobile ? 8 : 16.0),
                     child: _buildContent(context, constraints),
                   );
                 },
@@ -206,71 +207,82 @@ class _AlertsPageState extends State<AlertsPage> {
   }
 
   Widget _buildContent(BuildContext context, BoxConstraints constraints) {
+    final isMobile = isMobileScreen(context);
+    final screenHeight = MediaQuery.of(context).size.height;
+    final listHeight = (screenHeight - 280).clamp(360.0, 900.0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Title Section
-        const Row(
+        Row(
           children: [
-            Icon(Icons.warning_rounded, color: Colors.orange, size: 32),
-            SizedBox(width: 16),
+            Icon(Icons.warning_rounded,
+                color: Colors.orange, size: isMobile ? 24 : 32),
+            SizedBox(width: isMobile ? 12 : 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Alerts & Notification',
+                  'Alerts',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 28,
+                    fontSize: isMobile ? 20 : 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  'Monitor and manage system alerts & notification',
+                  isMobile
+                      ? 'Notifications'
+                      : 'Monitor and manage system alerts & notification',
                   style: TextStyle(
                     color: Colors.white70,
-                    fontSize: 14,
+                    fontSize: isMobile ? 12 : 14,
                   ),
                 ),
               ],
             ),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
-        // Main Content Row
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Left Panel - Alerts List
-            Expanded(
-              flex: 2,
-              child: _buildAlertsList(),
-            ),
-            const SizedBox(width: 20),
-            // Right Panel - Statistics
-            SizedBox(
-              width: constraints.maxWidth > 1200
-                  ? 350
-                  : constraints.maxWidth * 0.3,
-              child: Column(
-                children: [
-                  _buildAlertStatistics(),
-                  const SizedBox(height: 20),
-                  _buildAlertsByCategory(),
-                ],
+        // Main Content Row or Column based on screen size
+        if (isMobile)
+          Column(
+            children: [
+              _buildAlertsList(listHeight),
+              const SizedBox(height: 20),
+              _buildAlertStatistics(),
+            ],
+          )
+        else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 2,
+                child: _buildAlertsList(listHeight),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 20),
+              SizedBox(
+                width: constraints.maxWidth > 1200
+                    ? 350
+                    : constraints.maxWidth * 0.3,
+                child: Column(
+                  children: [
+                    _buildAlertStatistics(),
+                    const SizedBox(height: 20),
+                    _buildAlertsByCategory(),
+                  ],
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }
 
-  Widget _buildAlertsList() {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final listHeight = (screenHeight - 280).clamp(360.0, 900.0);
-
+  Widget _buildAlertsList(double listHeight) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -315,11 +327,11 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  Widget _buildAlertItem(Map<String, dynamic> alert) {
+  Widget _buildAlertItem(Alert alert) {
     Color severityColor;
     IconData severityIcon;
 
-    switch (alert['severity']) {
+    switch (alert.severity) {
       case 'critical':
         severityColor = Colors.red;
         severityIcon = Icons.error;
@@ -337,74 +349,82 @@ class _AlertsPageState extends State<AlertsPage> {
         severityIcon = Icons.info;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border(
-          left: BorderSide(color: severityColor, width: 4),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          navigateWithLoading(context, alert.route);
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border(
+              left: BorderSide(color: severityColor, width: 4),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: severityColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(severityIcon, color: severityColor, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      alert.title,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      alert.description,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      alert.timestamp,
+                      style: const TextStyle(
+                        color: Colors.black38,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                onPressed: () {
+                  // Delete alert
+                },
+                iconSize: 20,
+              ),
+            ],
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: severityColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(severityIcon, color: severityColor, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  alert['title'],
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  alert['description'],
-                  style: const TextStyle(
-                    color: Colors.black54,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  alert['timestamp'],
-                  style: const TextStyle(
-                    color: Colors.black38,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
-            onPressed: () {
-              // Delete alert
-            },
-            iconSize: 20,
-          ),
-        ],
       ),
     );
   }
@@ -587,12 +607,13 @@ class _AlertsPageState extends State<AlertsPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
+        title: const Text('Logout', style: TextStyle(color: Colors.black87)),
+        content: const Text('Apakah Anda yakin ingin keluar?',
+            style: TextStyle(color: Colors.black87)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: const Text('Batal', style: TextStyle(color: Colors.black87)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -605,6 +626,7 @@ class _AlertsPageState extends State<AlertsPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Logout'),
           ),

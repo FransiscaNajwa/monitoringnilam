@@ -6,6 +6,7 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = isMobileScreen(context);
     return Scaffold(
       backgroundColor: const Color(0xFF2C3E50),
       body: Column(
@@ -16,10 +17,11 @@ class ProfilePage extends StatelessWidget {
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: EdgeInsets.all(isMobile ? 8 : 24.0),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 800),
+                    constraints: BoxConstraints(
+                        maxWidth: isMobile ? double.infinity : 800),
                     child: _buildContent(context),
                   ),
                 ),
@@ -107,6 +109,7 @@ class ProfilePage extends StatelessWidget {
 
   Widget _buildContent(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Profile Header Card
         _buildProfileHeaderCard(context),
@@ -195,29 +198,6 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Status
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Online',
-                style: TextStyle(
-                  color: Colors.green,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -250,7 +230,7 @@ class ProfilePage extends StatelessWidget {
           const SizedBox(height: 16),
           _buildInfoRow('Username', 'admin_terminal'),
           const SizedBox(height: 16),
-          _buildInfoRow('Departemen', 'IT & Network Management'),
+          _buildInfoRow('Divisi', 'IT & Network Management'),
           const SizedBox(height: 16),
           _buildInfoRow('Status Aktif', 'Aktif'),
           const SizedBox(height: 16),
@@ -299,12 +279,6 @@ class ProfilePage extends StatelessWidget {
             icon: Icons.location_on,
             label: 'Lokasi',
             value: 'Surabaya, Jawa Timur',
-          ),
-          const SizedBox(height: 16),
-          _buildContactRow(
-            icon: Icons.business,
-            label: 'Kantor',
-            value: 'Terminal Nilam, Building A, Floor 3',
           ),
         ],
       ),
@@ -536,19 +510,28 @@ class ProfilePage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin logout?'),
+        title: const Text('Logout', style: TextStyle(color: Colors.black87)),
+        content: const Text('Apakah Anda yakin ingin logout?',
+            style: TextStyle(color: Colors.black87)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: const Text('Batal', style: TextStyle(color: Colors.black87)),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.pushReplacementNamed(context, '/login');
             },
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: const Text('Logout'),
           ),
         ],
       ),

@@ -144,6 +144,7 @@ class _ParkingCCTVPageState extends State<ParkingCCTVPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = isMobileScreen(context);
     return Scaffold(
       backgroundColor: const Color(0xFF2C3E50),
       body: Column(
@@ -154,7 +155,7 @@ class _ParkingCCTVPageState extends State<ParkingCCTVPage> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: EdgeInsets.all(isMobile ? 12 : 20.0),
                     child: _buildContent(context, constraints),
                   );
                 },
@@ -299,10 +300,6 @@ class _ParkingCCTVPageState extends State<ParkingCCTVPage> {
         ),
         const SizedBox(height: 24),
 
-        // Filter Section
-        _buildFilterSection(),
-        const SizedBox(height: 24),
-
         // Camera Grid
         _buildCameraGrid(constraints),
         const SizedBox(height: 24),
@@ -444,90 +441,27 @@ class _ParkingCCTVPageState extends State<ParkingCCTVPage> {
     );
   }
 
-  Widget _buildFilterSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          const Text(
-            'Filter by:',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          _buildFilterButton('All Locations', false),
-          _buildFilterButton('All Status', false),
-          _buildFilterButton('All Type', false),
-          _buildFilterButton('Fullscreen', false),
-          const Spacer(),
-          SizedBox(
-            width: 250,
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search camera...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterButton(String text, bool isActive) {
-    return ElevatedButton(
-      onPressed: () {},
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF1976D2),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(25),
-        ),
-      ),
-      child: Text(text),
-    );
-  }
-
   Widget _buildCameraGrid(BoxConstraints constraints) {
-    int crossAxisCount = constraints.maxWidth > 1400
-        ? 4
-        : constraints.maxWidth > 1000
-            ? 3
-            : constraints.maxWidth > 600
-                ? 2
-                : 1;
+    final isMobile = isMobileScreen(context);
+    int crossAxisCount = isMobile
+        ? 1
+        : constraints.maxWidth > 1400
+            ? 4
+            : constraints.maxWidth > 1000
+                ? 3
+                : 2;
+
+    double childAspectRatio = isMobile ? 1.0 : 1.2;
+    double spacing = isMobile ? 12 : 20;
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 20,
-        mainAxisSpacing: 20,
-        childAspectRatio: 1.2,
+        crossAxisSpacing: spacing,
+        mainAxisSpacing: spacing,
+        childAspectRatio: childAspectRatio,
       ),
       itemCount: paginatedCameras.length,
       itemBuilder: (context, index) {
@@ -715,12 +649,13 @@ class _ParkingCCTVPageState extends State<ParkingCCTVPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
+        title: const Text('Logout', style: TextStyle(color: Colors.black87)),
+        content: const Text('Apakah Anda yakin ingin keluar?',
+            style: TextStyle(color: Colors.black87)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: const Text('Batal', style: TextStyle(color: Colors.black87)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -733,6 +668,7 @@ class _ParkingCCTVPageState extends State<ParkingCCTVPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Logout'),
           ),

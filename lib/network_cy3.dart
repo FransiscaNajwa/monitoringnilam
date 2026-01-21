@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'main.dart';
+import 'services/api_service.dart';
+import 'models/tower_model.dart';
 
 // Network Page CY 3
 class NetworkCY3Page extends StatefulWidget {
@@ -13,6 +15,31 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
   String selectedTower = 'CY 3';
   int currentPage = 0;
   final int itemsPerPage = 5;
+  late ApiService apiService;
+  List<Tower> towers = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    apiService = ApiService();
+    _loadTowers();
+  }
+
+  Future<void> _loadTowers() async {
+    try {
+      final fetchedTowers = await apiService.getTowersByContainerYard('CY3');
+      setState(() {
+        towers = fetchedTowers;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading towers: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   final List<Map<String, dynamic>> towerData = [
     {
@@ -127,23 +154,22 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
     },
   ];
 
-  List<Map<String, dynamic>> get paginatedData {
+  List<Tower> get paginatedData {
     int start = currentPage * itemsPerPage;
-    int end = (start + itemsPerPage > towerData.length)
-        ? towerData.length
+    int end = (start + itemsPerPage > towers.length)
+        ? towers.length
         : start + itemsPerPage;
-    return towerData.sublist(start, end);
+    return towers.sublist(start, end);
   }
 
-  int get totalPages => (towerData.length / itemsPerPage).ceil();
+  int get totalPages => (towers.length / itemsPerPage).ceil();
 
-  int get totalTowers => towerData.length;
-  int get onlineTowers => towerData.where((t) => t['status'] == 'UP').length;
-  int get warningTowers =>
-      towerData.where((t) => t['status'] == 'Warning').length;
+  int get totalTowers => towers.length;
+  int get onlineTowers => towers.where((t) => t.status == 'UP').length;
+  int get warningTowers => towers.where((t) => t.status == 'Warning').length;
 
   void _showWarningList() {
-    final warnings = towerData.where((t) => t['status'] == 'Warning').toList();
+    final warnings = towers.where((t) => t.status == 'Warning').toList();
     showDialog(
       context: context,
       builder: (context) {
@@ -196,7 +222,7 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            t['id'],
+                            t.towerId,
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
@@ -239,6 +265,7 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = isMobileScreen(context);
     return Scaffold(
       backgroundColor: const Color(0xFF2C3E50),
       body: Column(
@@ -249,7 +276,7 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: EdgeInsets.all(isMobile ? 12 : 20.0),
                     child: _buildContent(context, constraints),
                   );
                 },
@@ -263,8 +290,10 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final isMobile = isMobileScreen(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 8 : 24, vertical: isMobile ? 10 : 16),
       color: const Color(0xFF1976D2),
       child: Row(
         children: [
@@ -334,6 +363,7 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
   }
 
   Widget _buildContent(BuildContext context, BoxConstraints constraints) {
+    final isMobile = isMobileScreen(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -375,66 +405,69 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
         ),
         const SizedBox(height: 24),
 
-        // Stats Cards Row
+        // Stats Cards Row with Dropdown
         LayoutBuilder(
           builder: (context, constraints) {
-            double cardWidth = constraints.maxWidth > 1400
-                ? (constraints.maxWidth - 100) / 5
-                : (constraints.maxWidth - 80) / 3;
+            double cardWidth = isMobile
+                ? (constraints.maxWidth - 16) / 1.5
+                : constraints.maxWidth > 1400
+                    ? (constraints.maxWidth - 100) / 5
+                    : (constraints.maxWidth - 80) / 3;
 
-            return Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: [
-                _buildStatCard('Total Tower', '$totalTowers', Colors.orange,
-                    width: cardWidth),
-                _buildStatCard('UP', '$onlineTowers', Colors.green,
-                    width: cardWidth),
-                _buildStatCard(
-                    'DOWN',
-                    '${towerData.where((t) => t['status'] == 'Warning').length}',
-                    Colors.blue,
-                    onTap: _showWarningList,
-                    width: cardWidth),
-                _buildNetworkDropdown(cardWidth),
-                _buildContainerYardButton(cardWidth),
-              ],
-            );
+            return isMobile
+                ? Column(
+                    children: [
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildStatCard(
+                                'Total Tower', '$totalTowers', Colors.orange,
+                                width: cardWidth),
+                            SizedBox(width: isMobile ? 8 : 16),
+                            _buildStatCard('UP', '$onlineTowers', Colors.green,
+                                width: cardWidth),
+                            SizedBox(width: isMobile ? 8 : 16),
+                            _buildStatCard(
+                                'DOWN',
+                                '${towerData.where((t) => t['status'] == 'Warning').length}',
+                                Colors.blue,
+                                onTap: _showWarningList,
+                                width: cardWidth),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildNetworkDropdown(constraints.maxWidth),
+                      const SizedBox(height: 12),
+                      _buildContainerYardButton(constraints.maxWidth),
+                    ],
+                  )
+                : Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    children: [
+                      _buildStatCard(
+                          'Total Tower', '$totalTowers', Colors.orange,
+                          width: cardWidth),
+                      _buildStatCard('UP', '$onlineTowers', Colors.green,
+                          width: cardWidth),
+                      _buildStatCard(
+                          'DOWN',
+                          '${towerData.where((t) => t['status'] == 'Warning').length}',
+                          Colors.red,
+                          onTap: _showWarningList,
+                          width: cardWidth),
+                      _buildNetworkDropdown(cardWidth),
+                      _buildContainerYardButton(cardWidth),
+                    ],
+                  );
           },
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
-        // Main Content Row
-        LayoutBuilder(
-          builder: (context, constraints) {
-            bool isWideScreen = constraints.maxWidth > 1200;
-
-            if (isWideScreen) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: _buildTowerList(),
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    flex: 5,
-                    child: _buildNetworkTrafficChart(),
-                  ),
-                ],
-              );
-            } else {
-              return Column(
-                children: [
-                  _buildTowerList(),
-                  const SizedBox(height: 20),
-                  _buildNetworkTrafficChart(),
-                ],
-              );
-            }
-          },
-        ),
+        // Tower List
+        _buildTowerList(),
       ],
     );
   }
@@ -465,8 +498,8 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -672,11 +705,16 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
           // Table Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFC6B430),
-              borderRadius: const BorderRadius.only(
+            decoration: const BoxDecoration(
+              color: Color(0xFFC6B430),
+              borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
+              ),
+              border: Border(
+                left: BorderSide(color: Color(0xFF9C8F2B), width: 1),
+                right: BorderSide(color: Color(0xFF9C8F2B), width: 1),
+                bottom: BorderSide(color: Color(0xFF9C8F2B), width: 1),
               ),
             ),
             child: Row(
@@ -685,7 +723,7 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
                 _buildHeaderCell('Lokasi', flex: 2),
                 _buildHeaderCell('IP Address', flex: 2),
                 _buildHeaderCell('Device', flex: 2),
-                _buildHeaderCell('Status', flex: 1),
+                _buildHeaderCell('Status', flex: 1, isLast: true),
               ],
             ),
           ),
@@ -697,9 +735,9 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
     );
   }
 
-  Widget _buildTableRow(Map<String, dynamic> tower) {
-    bool isWarning = tower['status'] == 'Warning';
-    String statusLabel = isWarning ? 'DOWN' : tower['status'];
+  Widget _buildTableRow(Tower tower) {
+    bool isWarning = tower.status == 'Warning';
+    String statusLabel = isWarning ? 'DOWN' : tower.status;
     Color statusTextColor = isWarning ? Colors.red : Colors.black87;
 
     return Container(
@@ -707,17 +745,22 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
       decoration: BoxDecoration(
         color: const Color(0xFFE8D5C4),
         border: Border(
+          left: BorderSide(color: Colors.grey[500]!, width: 1),
+          right: BorderSide(color: Colors.grey[500]!, width: 1),
           bottom: BorderSide(color: Colors.grey[300]!, width: 1),
         ),
       ),
       child: Row(
         children: [
-          _tableCell(tower['id'], flex: 1, fontWeight: FontWeight.w800),
-          _tableCell(tower['location'], flex: 2, fontWeight: FontWeight.w800),
-          _tableCell(tower['ip'], flex: 2),
-          _tableCell(tower['device'], flex: 2),
+          _tableCell(tower.towerId, flex: 1, fontWeight: FontWeight.w800),
+          _tableCell(tower.location, flex: 2, fontWeight: FontWeight.w800),
+          _tableCell(tower.ipAddress, flex: 2),
+          _tableCell('${tower.deviceCount} CCTV', flex: 2),
           _tableCell(statusLabel,
-              flex: 1, fontWeight: FontWeight.w800, color: statusTextColor),
+              flex: 1,
+              fontWeight: FontWeight.w800,
+              color: statusTextColor,
+              isLast: true),
         ],
       ),
     );
@@ -747,16 +790,26 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
     );
   }
 
-  Widget _buildHeaderCell(String label, {required int flex}) {
+  Widget _buildHeaderCell(String label,
+      {required int flex, bool isLast = false}) {
     return Expanded(
       flex: flex,
-      child: Text(
-        label,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w800,
-          fontSize: 14,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            right: isLast
+                ? BorderSide.none
+                : BorderSide(color: Colors.white.withOpacity(0.35), width: 1),
+          ),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+          ),
         ),
       ),
     );
@@ -766,96 +819,27 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
       {required int flex,
       FontWeight fontWeight = FontWeight.w700,
       Color color = Colors.black,
-      TextAlign align = TextAlign.center}) {
+      TextAlign align = TextAlign.center,
+      bool isLast = false}) {
     return Expanded(
       flex: flex,
-      child: Text(
-        text,
-        textAlign: align,
-        style: TextStyle(
-          color: color,
-          fontWeight: fontWeight,
-          fontSize: 14,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            right: isLast
+                ? BorderSide.none
+                : BorderSide(color: Colors.grey[500]!, width: 0.8),
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildNetworkTrafficChart() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+        child: Text(
+          text,
+          textAlign: align,
+          style: TextStyle(
+            color: color,
+            fontWeight: fontWeight,
+            fontSize: 14,
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1976D2),
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-            ),
-            child: const Center(
-              child: Text(
-                'Network Traffic',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Chart Area
-          Container(
-            height: 400,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8EAF6),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Stack(
-              children: [
-                // Chart visualization
-                CustomPaint(
-                  size: const Size(double.infinity, 400),
-                  painter: NetworkTrafficPainter(),
-                ),
-                // Time labels
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text('00:00',
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.black54)),
-                      Text('12:00',
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.black54)),
-                      Text('23:59',
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.black54)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -879,12 +863,13 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
+        title: const Text('Logout', style: TextStyle(color: Colors.black87)),
+        content: const Text('Apakah Anda yakin ingin keluar?',
+            style: TextStyle(color: Colors.black87)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: const Text('Batal', style: TextStyle(color: Colors.black87)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -897,6 +882,7 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Logout'),
           ),
@@ -932,63 +918,4 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
       ),
     );
   }
-}
-
-// Custom Painter for Network Traffic Chart
-class NetworkTrafficPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint1 = Paint()
-      ..color = const Color(0xFF5C6BC0).withOpacity(0.7)
-      ..style = PaintingStyle.fill;
-
-    final paint2 = Paint()
-      ..color = const Color(0xFF42A5F5).withOpacity(0.7)
-      ..style = PaintingStyle.fill;
-
-    final paint3 = Paint()
-      ..color = const Color(0xFFEC407A).withOpacity(0.7)
-      ..style = PaintingStyle.fill;
-
-    // Generate random mountain-like shapes
-    final path1 = Path();
-    final path2 = Path();
-    final path3 = Path();
-
-    path1.moveTo(0, size.height);
-    path2.moveTo(0, size.height);
-    path3.moveTo(0, size.height);
-
-    for (int i = 0; i <= 50; i++) {
-      double x = (size.width / 50) * i;
-      double y1 = size.height - (size.height * 0.3) - ((i % 7) * 30);
-      double y2 = size.height - (size.height * 0.5) - ((i % 5) * 25);
-      double y3 = size.height - (size.height * 0.2) - ((i % 6) * 20);
-
-      if (i == 0) {
-        path1.lineTo(x, y1);
-        path2.lineTo(x, y2);
-        path3.lineTo(x, y3);
-      } else {
-        path1.lineTo(x, y1);
-        path2.lineTo(x, y2);
-        path3.lineTo(x, y3);
-      }
-    }
-
-    path1.lineTo(size.width, size.height);
-    path2.lineTo(size.width, size.height);
-    path3.lineTo(size.width, size.height);
-
-    path1.close();
-    path2.close();
-    path3.close();
-
-    canvas.drawPath(path1, paint1);
-    canvas.drawPath(path2, paint2);
-    canvas.drawPath(path3, paint3);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
