@@ -1,3 +1,3 @@
 # monitoring
 
-Project for KP. can only be used with localhost
+Project for KP. can only be accessed using a local network
