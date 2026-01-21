@@ -1,3 +1,3 @@
 # monitoring
 
-A new Flutter project.
+Project for KP. can only be used with localhost
