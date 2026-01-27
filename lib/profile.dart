@@ -177,7 +177,7 @@ class _ProfilePageState extends State<ProfilePage> {
         return GestureDetector(
           onTap: () {
             if (isActive) {
-              _loadProfileData();
+              _loadUserData();
             } else {
               openContainer();
             }
