@@ -380,7 +380,16 @@ class _NetworkCY2PageState extends State<NetworkCY2Page> {
       openElevation: 0,
       openBuilder: (context, _) => RouteProxyPage(route),
       closedBuilder: (context, openContainer) {
-        return buildLiquidGlassButton(text, openContainer, isActive: isActive);
+        return GestureDetector(
+          onTap: () {
+            if (isActive) {
+              _loadTowers();
+            } else {
+              openContainer();
+            }
+          },
+          child: buildLiquidGlassButton(text, () {}, isActive: isActive),
+        );
       },
     );
   }

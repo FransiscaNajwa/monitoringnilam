@@ -313,7 +313,16 @@ class _CCTVPageState extends State<CCTVPage> {
       openElevation: 0,
       openBuilder: (context, _) => RouteProxyPage(route),
       closedBuilder: (context, openContainer) {
-        return buildLiquidGlassButton(text, openContainer, isActive: isActive);
+        return GestureDetector(
+          onTap: () {
+            if (isActive) {
+              _loadCameras();
+            } else {
+              openContainer();
+            }
+          },
+          child: buildLiquidGlassButton(text, () {}, isActive: isActive),
+        );
       },
     );
   }

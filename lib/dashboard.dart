@@ -687,10 +687,15 @@ class _DashboardPageState extends State<DashboardPage> {
       {bool isActive = false}) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => openPage),
-        );
+        if (isActive) {
+          // Refresh current page
+          _loadDashboardData();
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => openPage),
+          );
+        }
       },
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
