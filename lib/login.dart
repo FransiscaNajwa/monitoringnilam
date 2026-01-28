@@ -69,10 +69,17 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           // Show error message
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Login Gagal'),
                 content: Text(response['message'] ?? 'Login failed'),
-                backgroundColor: Colors.red,
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('OK'),
+                  ),
+                ],
               ),
             );
           }
@@ -82,10 +89,17 @@ class _LoginPageState extends State<LoginPage> {
           _isLoading = false;
         });
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Error'),
               content: Text('Error: $e'),
-              backgroundColor: Colors.red,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
             ),
           );
         }

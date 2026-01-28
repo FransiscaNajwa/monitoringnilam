@@ -124,11 +124,11 @@ class ApiService {
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
         print('Decoded Result: $result');
-        
+
         // Check response success flag
         bool isSuccess = result['success'] == true || result['success'] == 1;
         print('Is Success: $isSuccess');
-        
+
         return result;
       } else {
         return {
@@ -144,21 +144,22 @@ class ApiService {
   }
 
   // Verify field was actually updated in database
-  Future<Map<String, dynamic>> verifyProfileUpdate(int userId, String fieldName, dynamic expectedValue) async {
+  Future<Map<String, dynamic>> verifyProfileUpdate(
+      int userId, String fieldName, dynamic expectedValue) async {
     try {
       print('=== Verifying $fieldName Update ===');
-      
+
       final profile = await getProfile(userId);
       if (profile != null) {
         final json = profile.toJson();
         final actualValue = json[fieldName];
-        
+
         print('Expected: $expectedValue');
         print('Actual: $actualValue');
-        
+
         bool isMatched = actualValue == expectedValue;
         print('Match: $isMatched');
-        
+
         return {
           'success': isMatched,
           'field': fieldName,
@@ -167,7 +168,7 @@ class ApiService {
           'matched': isMatched
         };
       }
-      
+
       return {
         'success': false,
         'message': 'Failed to fetch profile for verification'

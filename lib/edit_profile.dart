@@ -137,23 +137,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
           // Verify each critical field was actually updated in database
           print('\n=== VERIFYING DATABASE UPDATES ===');
           bool allVerified = true;
-          
-          final fieldsToVerify = ['fullname', 'email', 'username', 'phone', 'location', 'division'];
+
+          final fieldsToVerify = [
+            'fullname',
+            'email',
+            'username',
+            'phone',
+            'location',
+            'division'
+          ];
           for (var field in fieldsToVerify) {
             final verifyResult = await apiService.verifyProfileUpdate(
-              _userId!, 
-              field, 
-              updateData[field]
-            );
-            
+                _userId!, field, updateData[field]);
+
             if (verifyResult['matched'] == true) {
               print('✓ $field verified: ${updateData[field]}');
             } else {
-              print('✗ $field NOT verified! Expected: ${updateData[field]}, Got: ${verifyResult['actual']}');
+              print(
+                  '✗ $field NOT verified! Expected: ${updateData[field]}, Got: ${verifyResult['actual']}');
               allVerified = false;
             }
           }
-          
+
           print('=== VERIFICATION COMPLETE ===');
           print('All fields verified: $allVerified\n');
 
@@ -170,10 +175,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
           }
 
           if (mounted) {
-            String message = allVerified 
-              ? 'Profil berhasil diperbarui dan tersimpan di database!'
-              : 'Profil diperbarui, tapi beberapa field mungkin tidak tersimpan di database. Cek log backend.';
-              
+            String message = allVerified
+                ? 'Profil berhasil diperbarui dan tersimpan di database!'
+                : 'Profil diperbarui, tapi beberapa field mungkin tidak tersimpan di database. Cek log backend.';
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(message),
