@@ -88,36 +88,49 @@ class ApiService {
   Future<Map<String, dynamic>> updateProfile(
       int userId, Map<String, dynamic> data) async {
     try {
+      final requestBody = {
+        'user_id': userId,
+        'fullname': data['fullname'],
+        'email': data['email'],
+        'username': data['username'],
+        // division
+        'division': data['division'],
+        'divisi': data['division'],
+        // phone
+        'phone': data['phone'],
+        'phone_number': data['phone'],
+        'no_telp': data['phone'],
+        'telp': data['phone'],
+        // location
+        'location': data['location'],
+        'lokasi': data['location'],
+        'address': data['location'],
+      };
+      
+      print('=== API updateProfile Request ===');
+      print('URL: $baseUrl?endpoint=auth&action=update-profile');
+      print('Body: $requestBody');
+      
       final response = await http.post(
         Uri.parse('$baseUrl?endpoint=auth&action=update-profile'),
         headers: {'Content-Type': 'application/json'},
-        // Send multiple aliases for fields to match various backend key names
-        body: jsonEncode({
-          'user_id': userId,
-          'fullname': data['fullname'],
-          'email': data['email'],
-          'username': data['username'],
-          // division
-          'division': data['division'],
-          'divisi': data['division'],
-          // phone
-          'phone': data['phone'],
-          'phone_number': data['phone'],
-          'no_telp': data['phone'],
-          'telp': data['phone'],
-          // location
-          'location': data['location'],
-          'lokasi': data['location'],
-          'address': data['location'],
-        }),
+        body: jsonEncode(requestBody),
       );
 
+      print('=== API updateProfile Response ===');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final result = jsonDecode(response.body);
+        print('Decoded Result: $result');
+        return result;
       } else {
-        return {'success': false, 'message': 'Update failed'};
+        return {'success': false, 'message': 'Update failed with status ${response.statusCode}'};
       }
     } catch (e) {
+      print('=== API updateProfile Error ===');
+      print('Error: $e');
       return {'success': false, 'message': 'Error: $e'};
     }
   }

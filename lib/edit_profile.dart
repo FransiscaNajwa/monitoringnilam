@@ -80,46 +80,56 @@ class _EditProfilePageState extends State<EditProfilePage> {
       });
 
       try {
+        final updateData = {
+          'fullname': _nameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'username': _usernameController.text.trim(),
+          'phone': _phoneController.text.trim(),
+          'location': _locationController.text.trim(),
+          'division': _divisionController.text.trim(),
+        };
+        
+        print('=== Update Profile Request ===');
+        print('User ID: $_userId');
+        print('Update Data: $updateData');
+        
         // Call API to update profile
-        final response = await apiService.updateProfile(
-          _userId!,
-          {
-            'fullname': _nameController.text.trim(),
-            'email': _emailController.text.trim(),
-            'username': _usernameController.text.trim(),
-            'phone': _phoneController.text.trim(),
-            'location': _locationController.text.trim(),
-            'division': _divisionController.text.trim(),
-          },
-        );
+        final response = await apiService.updateProfile(_userId!, updateData);
+
+        print('=== Update Profile Response ===');
+        print('Response: $response');
 
         setState(() {
           _isLoading = false;
         });
 
-        if (response['success'] == true) {
+        if (response['success'] == true || response['success'] == 1) {
+          print('Update berhasil, menyimpan ke SharedPreferences');
+          
           // Update SharedPreferences with new data
           final currentData = await AuthHelper.getUserData();
-          
+
           // Prepare updated user data
           final updatedData = {
             'id': _userId,
-            'username': _usernameController.text.trim(),
-            'email': _emailController.text.trim(),
-            'fullname': _nameController.text.trim(),
+            'username': updateData['username'],
+            'email': updateData['email'],
+            'fullname': updateData['fullname'],
             'role': currentData['role'] ?? 'user',
-            'phone': _phoneController.text.trim(),
-            'location': _locationController.text.trim(),
-            'division': _divisionController.text.trim(),
+            'phone': updateData['phone'],
+            'location': updateData['location'],
+            'division': updateData['division'],
           };
-          
+
           // Save to SharedPreferences
           await AuthHelper.saveUserData(updatedData);
+          print('Data tersimpan di SharedPreferences: $updatedData');
 
           // Fetch fresh profile from backend to confirm persistence and update cache
           try {
             final profile = await apiService.getProfile(_userId!);
             if (profile != null) {
+              print('Fresh profile dari backend: ${profile.toJson()}');
               await AuthHelper.saveUserData(profile.toJson());
             }
           } catch (e) {
@@ -140,6 +150,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
             Navigator.pop(context, updatedData);
           }
         } else {
+          print('Update gagal: ${response['message'] ?? 'Unknown error'}');
+          print('Response keys: ${response.keys}');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -154,6 +166,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
         setState(() {
           _isLoading = false;
         });
+        print('=== Exception saat update ===');
+        print('Error: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
