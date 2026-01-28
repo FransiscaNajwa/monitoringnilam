@@ -15,8 +15,8 @@ import 'utils/tower_status_override.dart';
 // Konstanta lokasi TPK Nilam - sesuai layout gambar
 class TPKNilamLocation {
   static const String name = 'Terminal Nilam';
-  static const double latitude = -7.2099123;
-  static const double longitude = 112.7244489;
+  static const double latitude = -7.207277;
+  static const double longitude = 112.723613;
   static const LatLng coordinate = LatLng(latitude, longitude);
   static const double defaultZoom = 16.5;
 }
@@ -687,15 +687,10 @@ class _DashboardPageState extends State<DashboardPage> {
       {bool isActive = false}) {
     return GestureDetector(
       onTap: () {
-        if (isActive) {
-          // Refresh current page
-          _loadDashboardData();
-        } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => openPage),
-          );
-        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => openPage),
+        );
       },
       child: MouseRegion(
         cursor: SystemMouseCursors.click,

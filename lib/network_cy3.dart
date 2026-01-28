@@ -179,63 +179,65 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
       content: ConstrainedBox(
         constraints: const BoxConstraints(
           maxWidth: 350,
-          maxHeight: 300,
+          maxHeight: 400,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (warnings.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(12.0),
-                child: Text(
-                  'Semua tower dalam kondisi UP.',
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
-                  textAlign: TextAlign.center,
-                ),
-              )
-            else
-              ...warnings.map((t) {
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 6),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.red.withOpacity(0.3)),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (warnings.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(12.0),
+                  child: Text(
+                    'Semua tower dalam kondisi UP.',
+                    style: TextStyle(fontSize: 13, color: Colors.black54),
+                    textAlign: TextAlign.center,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        t.towerId,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'DOWN',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                )
+              else
+                ...warnings.map((t) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          t.towerId,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black87,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-          ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'DOWN',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -430,16 +432,7 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
       openElevation: 0,
       openBuilder: (context, _) => RouteProxyPage(route),
       closedBuilder: (context, openContainer) {
-        return GestureDetector(
-          onTap: () {
-            if (isActive) {
-              _loadTowers();
-            } else {
-              openContainer();
-            }
-          },
-          child: buildLiquidGlassButton(text, () {}, isActive: isActive),
-        );
+        return buildLiquidGlassButton(text, openContainer, isActive: isActive);
       },
     );
   }

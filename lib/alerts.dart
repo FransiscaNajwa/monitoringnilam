@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
+import 'dart:async';
 import 'main.dart';
 import 'services/api_service.dart';
 import 'models/alert_model.dart';
@@ -22,6 +23,7 @@ class _AlertsPageState extends State<AlertsPage> {
   List<Tower> towers = [];
   List<Camera> cameras = [];
   bool isLoading = true;
+  Timer? _timer;
   final List<Map<String, dynamic>> alertsOld = [
     {
       'title': 'CCTV DOWN - CY1 Cam-12',
@@ -102,6 +104,106 @@ class _AlertsPageState extends State<AlertsPage> {
     super.initState();
     apiService = ApiService();
     _loadAlerts();
+    // Auto-refresh data dari database dan update UI setiap 30 detik
+    _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) {
+        _loadAlerts(); // Refresh data dari database secara real-time
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _getRelativeTime(String timestamp) {
+    try {
+      // Parse timestamp dari database
+      DateTime alertTime;
+      if (timestamp.contains('T')) {
+        alertTime = DateTime.parse(timestamp);
+      } else {
+        // Format: "2025-01-28 10:30:00"
+        alertTime = DateTime.parse(timestamp.replaceAll(' ', 'T'));
+      }
+
+      // Convert ke local time jika timestamp dalam UTC
+      if (alertTime.isUtc) {
+        alertTime = alertTime.toLocal();
+      }
+
+      final now = DateTime.now();
+      final difference = now.difference(alertTime);
+
+      if (difference.inSeconds < 60) {
+        return 'Baru saja';
+      } else if (difference.inMinutes < 60) {
+        return '${difference.inMinutes} menit yang lalu';
+      } else if (difference.inHours < 24) {
+        return '${difference.inHours} jam yang lalu';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays} hari yang lalu';
+      } else if (difference.inDays < 30) {
+        final weeks = (difference.inDays / 7).floor();
+        return '$weeks minggu yang lalu';
+      } else if (difference.inDays < 365) {
+        final months = (difference.inDays / 30).floor();
+        return '$months bulan yang lalu';
+      } else {
+        final years = (difference.inDays / 365).floor();
+        return '$years tahun yang lalu';
+      }
+    } catch (e) {
+      // Jika parsing gagal, return timestamp asli
+      return timestamp;
+    }
+  }
+
+  String _getFormattedDate(String timestamp) {
+    try {
+      // Parse timestamp dari database
+      DateTime alertTime;
+      if (timestamp.contains('T')) {
+        alertTime = DateTime.parse(timestamp);
+      } else {
+        // Format: "2025-01-28 10:30:00"
+        alertTime = DateTime.parse(timestamp.replaceAll(' ', 'T'));
+      }
+
+      // Convert ke local time jika timestamp dalam UTC
+      if (alertTime.isUtc) {
+        alertTime = alertTime.toLocal();
+      }
+
+      // Daftar nama bulan dalam Bahasa Indonesia
+      const months = [
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember'
+      ];
+
+      final day = alertTime.day;
+      final month = months[alertTime.month - 1];
+      final year = alertTime.year;
+      final hour = alertTime.hour.toString().padLeft(2, '0');
+      final minute = alertTime.minute.toString().padLeft(2, '0');
+
+      return '$day $month $year, $hour:$minute';
+    } catch (e) {
+      // Jika parsing gagal, return timestamp asli
+      return timestamp;
+    }
   }
 
   Future<void> _loadAlerts() async {
@@ -289,16 +391,7 @@ class _AlertsPageState extends State<AlertsPage> {
       openElevation: 0,
       openBuilder: (context, _) => RouteProxyPage(route),
       closedBuilder: (context, openContainer) {
-        return GestureDetector(
-          onTap: () {
-            if (isActive) {
-              _loadAlerts();
-            } else {
-              openContainer();
-            }
-          },
-          child: buildLiquidGlassButton(text, () {}, isActive: isActive),
-        );
+        return buildLiquidGlassButton(text, openContainer, isActive: isActive);
       },
     );
   }
@@ -591,10 +684,20 @@ class _AlertsPageState extends State<AlertsPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      alert.timestamp,
+                      _getRelativeTime(alert.timestamp),
                       style: const TextStyle(
                         color: Colors.black38,
                         fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _getFormattedDate(alert.timestamp),
+                      style: const TextStyle(
+                        color: Colors.black38,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],

@@ -40,50 +40,52 @@ class _CCTVPageState extends State<CCTVPage> {
       content: ConstrainedBox(
         constraints: const BoxConstraints(
           maxWidth: 350,
-          maxHeight: 300,
+          maxHeight: 400,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (offlines.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(12.0),
-                child: Text(
-                  'Semua kamera dalam kondisi UP.',
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
-                  textAlign: TextAlign.center,
-                ),
-              )
-            else
-              ...offlines.map((cam) {
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(6),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (offlines.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(12.0),
+                  child: Text(
+                    'Semua kamera dalam kondisi UP.',
+                    style: TextStyle(fontSize: 13, color: Colors.black54),
+                    textAlign: TextAlign.center,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        cam['id'],
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        cam['status'],
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 11),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-          ],
+                )
+              else
+                ...offlines.map((cam) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          cam['id'],
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          cam['status'],
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -313,16 +315,7 @@ class _CCTVPageState extends State<CCTVPage> {
       openElevation: 0,
       openBuilder: (context, _) => RouteProxyPage(route),
       closedBuilder: (context, openContainer) {
-        return GestureDetector(
-          onTap: () {
-            if (isActive) {
-              _loadCameras();
-            } else {
-              openContainer();
-            }
-          },
-          child: buildLiquidGlassButton(text, () {}, isActive: isActive),
-        );
+        return buildLiquidGlassButton(text, openContainer, isActive: isActive);
       },
     );
   }
