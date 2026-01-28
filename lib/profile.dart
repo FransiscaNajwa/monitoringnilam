@@ -468,7 +468,9 @@ class _ProfilePageState extends State<ProfilePage> {
         ElevatedButton.icon(
           onPressed: () async {
             final result = await Navigator.pushNamed(context, '/edit-profile');
-            if (result == true && mounted) {
+            // Refresh data jika user berhasil mengubah profil
+            // result bisa berupa true atau Map dengan data baru
+            if (result != null && mounted) {
               _loadUserData();
             }
           },

@@ -100,8 +100,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         if (response['success'] == true) {
           // Update SharedPreferences with new data
           final currentData = await AuthHelper.getUserData();
-          await AuthHelper.saveUserData({
-            'id': _userId!,
+          
+          // Prepare updated user data
+          final updatedData = {
+            'id': _userId,
             'username': _usernameController.text.trim(),
             'email': _emailController.text.trim(),
             'fullname': _nameController.text.trim(),
@@ -109,12 +111,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
             'phone': _phoneController.text.trim(),
             'location': _locationController.text.trim(),
             'division': _divisionController.text.trim(),
-          });
+          };
+          
+          // Save to SharedPreferences
+          await AuthHelper.saveUserData(updatedData);
 
           // Fetch fresh profile from backend to confirm persistence and update cache
-          final profile = await apiService.getProfile(_userId!);
-          if (profile != null) {
-            await AuthHelper.saveUserData(profile.toJson());
+          try {
+            final profile = await apiService.getProfile(_userId!);
+            if (profile != null) {
+              await AuthHelper.saveUserData(profile.toJson());
+            }
+          } catch (e) {
+            print('Failed to fetch fresh profile: $e');
+            // Tetap lanjut karena data sudah disimpan di SharedPreferences
           }
 
           if (mounted) {
@@ -126,8 +136,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
             );
 
-            // Kembali ke halaman profil dan trigger refresh
-            Navigator.pop(context, true);
+            // Kembali ke halaman profil dan trigger refresh dengan data baru
+            Navigator.pop(context, updatedData);
           }
         } else {
           if (mounted) {

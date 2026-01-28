@@ -21,6 +21,7 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   bool _showPasswordRequirements = false;
+  bool _showEmailError = false; // Track if error notification should show
 
   // Password requirements tracking
   bool _hasMinLength = false;
@@ -49,6 +50,29 @@ class _SignUpPageState extends State<SignUpPage> {
         _hasLowercase = RegExp(r'[a-z]').hasMatch(password);
         _hasNumber = RegExp(r'[0-9]').hasMatch(password);
       });
+    });
+
+    // Email validation listener - deteksi typo saat ketik
+    _emailController.addListener(() {
+      final email = _emailController.text.trim();
+      final hasTypedSomething = email.isNotEmpty;
+      final isInvalidFormat = !email.endsWith('@gmail.com');
+
+      if (hasTypedSomething && isInvalidFormat) {
+        // Ada typo atau format salah
+        if (!_showEmailError) {
+          setState(() {
+            _showEmailError = true;
+          });
+        }
+      } else {
+        // Format benar atau kosong
+        if (_showEmailError) {
+          setState(() {
+            _showEmailError = false;
+          });
+        }
+      }
     });
   }
 
@@ -170,14 +194,9 @@ class _SignUpPageState extends State<SignUpPage> {
             Navigator.pop(context);
           }
         } else {
-          // Show error message
+          // Show error message with detailed field error
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(response['message'] ?? 'Registration failed'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            _showSignUpErrorDialog(response);
           }
         }
       } catch (e) {
@@ -193,7 +212,255 @@ class _SignUpPageState extends State<SignUpPage> {
           );
         }
       }
+    } else {
+      // Validation failed - show which fields have errors
+      _showValidationErrorDialog();
     }
+  }
+
+  void _showValidationErrorDialog() {
+    List<String> errorFields = [];
+
+    if (_usernameController.text.isEmpty) {
+      errorFields.add('Username harus diisi');
+    }
+    if (_nameController.text.isEmpty) {
+      errorFields.add('Full Name harus diisi');
+    }
+    if (_emailController.text.isEmpty) {
+      errorFields.add('Email harus diisi');
+    } else if (!_emailController.text.endsWith('@gmail.com')) {
+      errorFields.add('Email harus berformat @gmail.com');
+    }
+    if (_passwordController.text.isEmpty) {
+      errorFields.add('Password harus diisi');
+    } else if (_passwordController.text.length < 8) {
+      errorFields.add('Password minimal 8 karakter');
+    } else if (!RegExp(r'[A-Z]').hasMatch(_passwordController.text)) {
+      errorFields.add('Password harus mengandung huruf besar');
+    } else if (!RegExp(r'[a-z]').hasMatch(_passwordController.text)) {
+      errorFields.add('Password harus mengandung huruf kecil');
+    } else if (!RegExp(r'[0-9]').hasMatch(_passwordController.text)) {
+      errorFields.add('Password harus mengandung angka');
+    }
+    if (_confirmPasswordController.text != _passwordController.text) {
+      errorFields.add('Konfirmasi password tidak sesuai');
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 420,
+              minWidth: 300,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.red.withOpacity(0.5),
+                  width: 2,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Data Tidak Valid',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Silakan perbaiki field berikut:',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...errorFields.map((error) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.check_circle,
+                            color: Colors.red,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              error,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.red,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Perbaiki Data',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSignUpErrorDialog(Map<String, dynamic> response) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 420,
+              minWidth: 300,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.red.withOpacity(0.5),
+                  width: 2,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Signup Gagal',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    response['message'] ?? 'Terjadi kesalahan saat mendaftar',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _handleBackToLogin() {
@@ -391,6 +658,50 @@ class _SignUpPageState extends State<SignUpPage> {
 
                               const SizedBox(height: 20),
 
+                              // Email Error Popup (above email field)
+                              if (_showEmailError)
+                                Container(
+                                  width: double.infinity,
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFCDD2),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: const Color(0xFFC62828),
+                                      width: 2.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.red.withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.error_outline,
+                                        color: Color(0xFFC62828),
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Text(
+                                          'Email harus berformat @gmail.com',
+                                          style: const TextStyle(
+                                            color: Color(0xFF8B0000),
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
                               // Email Field
                               TextFormField(
                                 controller: _emailController,
@@ -412,8 +723,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                   if (value == null || value.isEmpty) {
                                     return 'Please enter your email';
                                   }
-                                  if (!value.contains('@')) {
-                                    return 'Please enter a valid email';
+                                  if (!value.endsWith('@gmail.com')) {
+                                    return 'Email harus berformat @gmail.com';
                                   }
                                   return null;
                                 },
