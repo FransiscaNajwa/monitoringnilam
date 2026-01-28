@@ -124,6 +124,11 @@ class ApiService {
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
         print('Decoded Result: $result');
+        
+        // Check response success flag
+        bool isSuccess = result['success'] == true || result['success'] == 1;
+        print('Is Success: $isSuccess');
+        
         return result;
       } else {
         return {
@@ -134,6 +139,41 @@ class ApiService {
     } catch (e) {
       print('=== API updateProfile Error ===');
       print('Error: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  // Verify field was actually updated in database
+  Future<Map<String, dynamic>> verifyProfileUpdate(int userId, String fieldName, dynamic expectedValue) async {
+    try {
+      print('=== Verifying $fieldName Update ===');
+      
+      final profile = await getProfile(userId);
+      if (profile != null) {
+        final json = profile.toJson();
+        final actualValue = json[fieldName];
+        
+        print('Expected: $expectedValue');
+        print('Actual: $actualValue');
+        
+        bool isMatched = actualValue == expectedValue;
+        print('Match: $isMatched');
+        
+        return {
+          'success': isMatched,
+          'field': fieldName,
+          'expected': expectedValue,
+          'actual': actualValue,
+          'matched': isMatched
+        };
+      }
+      
+      return {
+        'success': false,
+        'message': 'Failed to fetch profile for verification'
+      };
+    } catch (e) {
+      print('Error verifying: $e');
       return {'success': false, 'message': 'Error: $e'};
     }
   }
@@ -197,7 +237,10 @@ class ApiService {
         }
       } else {
         print('HTTP Error ${response.statusCode}');
-        return {'success': false, 'message': 'Update failed with status ${response.statusCode}'};
+        return {
+          'success': false,
+          'message': 'Update failed with status ${response.statusCode}'
+        };
       }
     } catch (e) {
       print('Exception: $e');
@@ -210,7 +253,7 @@ class ApiService {
       int userId, Map<String, dynamic> data) async {
     try {
       print('=== Field by Field Update Start ===');
-      
+
       Map<String, dynamic> finalResult = {
         'success': true,
         'message': 'All fields updated',
@@ -230,25 +273,27 @@ class ApiService {
       for (var key in fieldVariations.keys) {
         if (data[key] != null && data[key].toString().isNotEmpty) {
           print('\nUpdating field: $key = ${data[key]}');
-          
+
           final variations = fieldVariations[key]!;
           bool updated = false;
-          
+
           // Try each field name variation
           for (var fieldVariant in variations) {
-            final result = await _updateSingleField(userId, fieldVariant, data[key]);
-            
+            final result =
+                await _updateSingleField(userId, fieldVariant, data[key]);
+
             if (result['success'] == true) {
               print('✓ Successfully updated with field name: $fieldVariant');
               finalResult['results'][key] = result;
               updated = true;
               break;
             } else {
-              print('✗ Failed with field name: $fieldVariant - ${result['message']}');
+              print(
+                  '✗ Failed with field name: $fieldVariant - ${result['message']}');
               finalResult['results']['${key}_${fieldVariant}'] = result;
             }
           }
-          
+
           if (!updated) {
             finalResult['success'] = false;
             print('✗ Failed to update $key with any field name variation');

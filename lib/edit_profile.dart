@@ -94,15 +94,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
         print('Update Data: $updateData');
 
         // Call API to update profile
-        Map<String, dynamic> response = await apiService.updateProfile(_userId!, updateData);
+        Map<String, dynamic> response =
+            await apiService.updateProfile(_userId!, updateData);
 
         print('=== Primary Update Response ===');
         print('Response: $response');
-        
+
         // If primary method fails, try field-by-field approach
         if (response['success'] != true && response['success'] != 1) {
           print('Primary method failed, trying field-by-field approach...');
-          response = await apiService.updateProfileFieldByField(_userId!, updateData);
+          response =
+              await apiService.updateProfileFieldByField(_userId!, updateData);
           print('Field-by-field response: $response');
         }
 
@@ -132,6 +134,29 @@ class _EditProfilePageState extends State<EditProfilePage> {
           await AuthHelper.saveUserData(updatedData);
           print('Data tersimpan di SharedPreferences: $updatedData');
 
+          // Verify each critical field was actually updated in database
+          print('\n=== VERIFYING DATABASE UPDATES ===');
+          bool allVerified = true;
+          
+          final fieldsToVerify = ['fullname', 'email', 'username', 'phone', 'location', 'division'];
+          for (var field in fieldsToVerify) {
+            final verifyResult = await apiService.verifyProfileUpdate(
+              _userId!, 
+              field, 
+              updateData[field]
+            );
+            
+            if (verifyResult['matched'] == true) {
+              print('✓ $field verified: ${updateData[field]}');
+            } else {
+              print('✗ $field NOT verified! Expected: ${updateData[field]}, Got: ${verifyResult['actual']}');
+              allVerified = false;
+            }
+          }
+          
+          print('=== VERIFICATION COMPLETE ===');
+          print('All fields verified: $allVerified\n');
+
           // Fetch fresh profile from backend to confirm persistence and update cache
           try {
             final profile = await apiService.getProfile(_userId!);
@@ -145,11 +170,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
           }
 
           if (mounted) {
+            String message = allVerified 
+              ? 'Profil berhasil diperbarui dan tersimpan di database!'
+              : 'Profil diperbarui, tapi beberapa field mungkin tidak tersimpan di database. Cek log backend.';
+              
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profil berhasil diperbarui!'),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 2),
+              SnackBar(
+                content: Text(message),
+                backgroundColor: allVerified ? Colors.green : Colors.orange,
+                duration: const Duration(seconds: 3),
               ),
             );
 
