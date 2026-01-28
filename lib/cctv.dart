@@ -58,12 +58,12 @@ class _CCTVPageState extends State<CCTVPage> {
               else
                 ...offlines.map((cam) {
                   return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
-                      color: Colors.red,
+                      color: Colors.red.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.red.withOpacity(0.3)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -71,14 +71,14 @@ class _CCTVPageState extends State<CCTVPage> {
                         Text(
                           cam['id'],
                           style: const TextStyle(
-                              color: Colors.white,
+                              color: Colors.black87,
                               fontSize: 12,
                               fontWeight: FontWeight.bold),
                         ),
                         Text(
                           cam['status'],
                           style: const TextStyle(
-                              color: Colors.white70, fontSize: 11),
+                              color: Colors.red, fontSize: 11),
                         ),
                       ],
                     ),
