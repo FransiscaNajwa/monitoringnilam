@@ -82,7 +82,7 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return Padding(
-                    padding: EdgeInsets.all(isMobile ? 12 : 24),
+                    padding: EdgeInsets.all(isMobile ? 8 : 16),
                     child: _buildContent(context, constraints),
                   );
                 },
@@ -222,28 +222,28 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
-        // Stats Section (Compact)
+        // Stats Section (Compact & Readable)
         Row(
           children: [
             Expanded(
               child: _buildStatCard('TOTAL CCTV', totalCameras.toString(),
                   Colors.blue, double.infinity),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(
               child: _buildStatCard(
                   'UP', upCameras.toString(), Colors.green, double.infinity),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(
               child: _buildStatCard(
                   'DOWN', downCameras.toString(), Colors.red, double.infinity),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
         // Camera Grid - Full Screen
         _buildCameraGrid(constraints),
@@ -254,13 +254,13 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
   Widget _buildStatCard(
       String title, String value, Color indicatorColor, double width) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -276,13 +276,13 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
                 title,
                 style: const TextStyle(
                   color: Colors.black54,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               Container(
-                width: 10,
-                height: 10,
+                width: 12,
+                height: 12,
                 decoration: BoxDecoration(
                   color: indicatorColor,
                   borderRadius: BorderRadius.circular(2),
@@ -290,12 +290,12 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             value,
             style: const TextStyle(
               color: Colors.black,
-              fontSize: 24,
+              fontSize: 36,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -358,9 +358,10 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
     }
 
     // Show camera grid when data exists
+    // Perbesarkan kotak: dari 50px → 80px untuk menampilkan tulisan lebih jelas
     int crossAxisCount =
-        (constraints.maxWidth / 50).floor().clamp(8, 30).toInt();
-    double spacing = 6;
+        (constraints.maxWidth / 80).floor().clamp(6, 18).toInt();
+    double spacing = 8;
 
     return Container(
       decoration: BoxDecoration(
@@ -368,7 +369,7 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -401,24 +402,24 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
       child: Container(
         decoration: BoxDecoration(
           color: statusColor,
-          borderRadius: BorderRadius.circular(3),
+          borderRadius: BorderRadius.circular(4),
           boxShadow: [
             BoxShadow(
               color: statusColor.withOpacity(0.4),
-              blurRadius: 2,
-              offset: const Offset(0, 1),
+              blurRadius: 3,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.all(4),
             child: Text(
               camera['id'],
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 8,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),
             ),
