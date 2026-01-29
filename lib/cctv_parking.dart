@@ -123,7 +123,7 @@ class _ParkingCCTVPageState extends State<ParkingCCTVPage> {
       });
 
       final apiService = ApiService();
-      final cameras = await apiService.getCamerasByAreaType('Parking');
+      final cameras = await apiService.getCamerasByAreaType('Lot');
 
       setState(() {
         allCameras.clear();
@@ -535,7 +535,7 @@ class _ParkingCCTVPageState extends State<ParkingCCTVPage> {
                     } else if (newValue == 'Parking') {
                       // Already on Parking
                     } else if (newValue == 'Gate') {
-                      navigateWithLoading(context, '/gate-cctv');
+                      navigateWithLoading(context, '/cctv-gate');
                     }
                   }
                 },

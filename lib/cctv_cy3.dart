@@ -526,9 +526,9 @@ class _CCTVCy3PageState extends State<CCTVCy3Page> {
                     } else if (newValue == 'CY 3') {
                       // Already on CY 3
                     } else if (newValue == 'Parking') {
-                      navigateWithLoading(context, '/parking-cctv');
+                      navigateWithLoading(context, '/cctv-parking');
                     } else if (newValue == 'Gate') {
-                      navigateWithLoading(context, '/gate-cctv');
+                      navigateWithLoading(context, '/cctv-gate');
                     }
                   }
                 },

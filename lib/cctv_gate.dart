@@ -123,7 +123,7 @@ class _GateCCTVPageState extends State<GateCCTVPage> {
       });
 
       final apiService = ApiService();
-      final cameras = await apiService.getCamerasByAreaType('Gate');
+      final cameras = await apiService.getCamerasByAreaType('Entrance');
 
       setState(() {
         allCameras.clear();
@@ -533,7 +533,7 @@ class _GateCCTVPageState extends State<GateCCTVPage> {
                     } else if (newValue == 'CY 3') {
                       navigateWithLoading(context, '/cctv-cy3');
                     } else if (newValue == 'Parking') {
-                      navigateWithLoading(context, '/parking-cctv');
+                      navigateWithLoading(context, '/cctv-parking');
                     } else if (newValue == 'Gate') {
                       // Already on Gate
                     }

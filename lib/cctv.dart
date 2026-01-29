@@ -591,9 +591,9 @@ class _CCTVPageState extends State<CCTVPage> {
                     } else if (newValue == 'CY 3') {
                       navigateWithLoading(context, '/cctv-cy3');
                     } else if (newValue == 'Parking') {
-                      navigateWithLoading(context, '/parking-cctv');
+                      navigateWithLoading(context, '/cctv-parking');
                     } else if (newValue == 'Gate') {
-                      navigateWithLoading(context, '/gate-cctv');
+                      navigateWithLoading(context, '/cctv-gate');
                     }
                   }
                 },

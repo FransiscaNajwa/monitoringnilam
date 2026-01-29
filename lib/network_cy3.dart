@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
 import 'main.dart';
@@ -21,12 +22,27 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
   late ApiService apiService;
   List<Tower> towers = [];
   bool isLoading = true;
+  Timer? _refreshTimer;
+  DateTime? _lastRefreshTime;
 
   @override
   void initState() {
     super.initState();
     apiService = ApiService();
     _loadTowers();
+    _startAutoRefresh();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer = Timer.periodic(const Duration(minutes: 5), (timer) {
+      _loadTowers();
+    });
   }
 
   Future<void> _loadTowers() async {
@@ -35,6 +51,7 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
       setState(() {
         towers = applyForcedTowerStatus(fetchedTowers);
         isLoading = false;
+        _lastRefreshTime = DateTime.now();
       });
     } catch (e) {
       print('Error loading towers: $e');
@@ -460,10 +477,10 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
                   size: 32, color: Color(0xFF1976D2)),
             ),
             const SizedBox(width: 16),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Network Monitoring',
                   style: TextStyle(
                     color: Colors.white,
@@ -471,13 +488,30 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 4),
-                Text(
-                  'Real time network infrastructure monitoring and diagnostics',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Text(
+                      'Real time network infrastructure monitoring',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                    if (_lastRefreshTime != null) ...[
+                      const SizedBox(width: 8),
+                      const Text('•', style: TextStyle(color: Colors.white70)),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Updated: ${_lastRefreshTime!.hour.toString().padLeft(2, '0')}:${_lastRefreshTime!.minute.toString().padLeft(2, '0')}',
+                        style: const TextStyle(
+                          color: Colors.greenAccent,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
