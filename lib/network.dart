@@ -148,7 +148,7 @@ class _NetworkPageState extends State<NetworkPage> {
   ];
 
   int get totalTowers => towers.length;
-  int get onlineTowers => towers.where((t) => t.status == 'UP').length;
+  int get onlineTowers => towers.where((t) => !isDownStatus(t.status)).length;
   int get warningTowers => towers.where((t) => isDownStatus(t.status)).length;
 
   List<Tower> _normalizeAndSortTowers(List<Tower> input) {

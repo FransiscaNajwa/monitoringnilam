@@ -291,7 +291,7 @@ class ApiService {
             } else {
               print(
                   '✗ Failed with field name: $fieldVariant - ${result['message']}');
-              finalResult['results']['${key}_${fieldVariant}'] = result;
+              finalResult['results']['${key}_$fieldVariant'] = result;
             }
           }
 

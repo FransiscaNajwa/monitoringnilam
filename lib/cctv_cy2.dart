@@ -149,6 +149,7 @@ class _CCTVCy2PageState extends State<CCTVCy2Page> {
     }
   }
 
+  @override
   Widget build(BuildContext context) {
     final isMobile = isMobileScreen(context);
     return Scaffold(

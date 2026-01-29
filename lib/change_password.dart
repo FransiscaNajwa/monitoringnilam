@@ -82,34 +82,51 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     if (_formKey.currentState!.validate()) {
       // Validasi additional
       if (!_confirmMatch) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password baru dan konfirmasi tidak cocok!'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 2),
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            content: const Text('Password tidak cocok'),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'))
+            ],
           ),
         );
         return;
       }
 
       if (!_ruleLength) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password harus minimal 8 karakter!'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 2),
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            content: const Text('Minimal 8 karakter'),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'))
+            ],
           ),
         );
         return;
       }
 
       if (!(_ruleUpper && _ruleLower && _ruleDigit)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'Password harus mengandung huruf besar, huruf kecil, dan angka'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 2),
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            content: const Text('Harus huruf besar, kecil, dan angka'),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'))
+            ],
           ),
         );
         return;
@@ -123,10 +140,17 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('User ID tidak ditemukan. Silakan login ulang.'),
-            backgroundColor: Colors.red,
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            content: const Text('Login ulang diperlukan'),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'))
+            ],
           ),
         );
         return;
@@ -145,20 +169,36 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
         if (res['success'] == true) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(res['message'] ?? 'Password berhasil diubah!'),
-                backgroundColor: Colors.green,
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                content: Text(res['message'] ?? 'Password berhasil diubah'),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context, true);
+                      },
+                      child: const Text('OK'))
+                ],
               ),
             );
-            Navigator.pop(context, true);
           }
         } else {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
                 content: Text(res['message'] ?? 'Gagal mengubah password'),
-                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('OK'))
+                ],
               ),
             );
           }
@@ -168,10 +208,17 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           _isLoading = false;
         });
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
               content: Text('Error: $e'),
-              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('OK'))
+              ],
             ),
           );
         }

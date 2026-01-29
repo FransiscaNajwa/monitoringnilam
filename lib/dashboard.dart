@@ -179,15 +179,15 @@ final List<TowerPoint> towerPoints = [
       number: 7,
       name: 'Tower 7',
       label: '7',
-      latitude: -7.207617,
-      longitude: 112.723826,
+      latitude: -7.207690,
+      longitude: 112.723693,
       containerYard: 'CY1'),
   TowerPoint(
       number: 8,
       name: 'Tower 8',
       label: '8',
-      latitude: -7.207563,
-      longitude: 112.723950,
+      latitude: -7.207567,
+      longitude: 112.723945,
       containerYard: 'CY1'),
   TowerPoint(
       number: 9,
@@ -388,12 +388,18 @@ class _DashboardPageState extends State<DashboardPage> {
             route = '/network-cy3';
           }
 
+          final timestamp = tower.updatedAt.isNotEmpty
+              ? tower.updatedAt
+              : (tower.createdAt.isNotEmpty
+                  ? tower.createdAt
+                  : DateTime.now().toString());
+
           generatedAlerts.add(Alert(
             id: 'tower-${tower.id}',
             title: 'Tower DOWN - ${tower.towerId}',
             description: '${tower.location} tower offline (${tower.towerId})',
             severity: 'critical',
-            timestamp: tower.createdAt,
+            timestamp: timestamp,
             route: route,
             category: 'Tower',
           ));
@@ -401,7 +407,7 @@ class _DashboardPageState extends State<DashboardPage> {
       }
 
       for (final camera in fetchedCameras) {
-        if (camera.status == 'DOWN') {
+        if (isDownStatus(camera.status)) {
           String route = '/cctv';
           if (camera.containerYard == 'CY2') {
             route = '/cctv-cy2';
@@ -409,13 +415,19 @@ class _DashboardPageState extends State<DashboardPage> {
             route = '/cctv-cy3';
           }
 
+          final timestamp = camera.updatedAt.isNotEmpty
+              ? camera.updatedAt
+              : (camera.createdAt.isNotEmpty
+                  ? camera.createdAt
+                  : DateTime.now().toString());
+
           generatedAlerts.add(Alert(
             id: 'camera-${camera.id}',
             title: 'CCTV DOWN - ${camera.cameraId}',
             description:
                 '${camera.location} camera offline (${camera.cameraId})',
             severity: 'critical',
-            timestamp: camera.createdAt,
+            timestamp: timestamp,
             route: route,
             category: 'CCTV',
           ));
@@ -424,8 +436,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
       setState(() {
         cameras = fetchedCameras;
-        totalUpCameras = cameras.where((c) => c.status == 'UP').length;
-        totalDownCameras = cameras.where((c) => c.status == 'DOWN').length;
+        totalUpCameras = cameras.where((c) => !isDownStatus(c.status)).length;
+        totalDownCameras = cameras.where((c) => isDownStatus(c.status)).length;
 
         towers = updatedTowers;
         totalOnlineTowers = towers.where((t) => !isDownStatus(t.status)).length;
@@ -454,7 +466,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   String _getTowerStatusForPoint(TowerPoint point) {
-    if (isForcedDown(point.number)) return 'DOWN';
     final tower = _findTowerForPoint(point);
     return tower?.status.toUpperCase() ?? 'UP';
   }

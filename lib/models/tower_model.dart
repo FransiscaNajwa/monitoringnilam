@@ -10,6 +10,7 @@ class Tower {
   final String uptime;
   final String containerYard;
   final String createdAt;
+  final String updatedAt;
 
   Tower({
     required this.id,
@@ -23,6 +24,7 @@ class Tower {
     required this.uptime,
     required this.containerYard,
     required this.createdAt,
+    required this.updatedAt,
   });
 
   factory Tower.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,7 @@ class Tower {
       uptime: json['uptime']?.toString() ?? '0%',
       containerYard: json['container_yard']?.toString() ?? '',
       createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
     );
   }
 
@@ -54,6 +57,7 @@ class Tower {
       'uptime': uptime,
       'container_yard': containerYard,
       'created_at': createdAt,
+      'updated_at': updatedAt,
     };
   }
 }

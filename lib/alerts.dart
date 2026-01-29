@@ -24,6 +24,8 @@ class _AlertsPageState extends State<AlertsPage> {
   List<Camera> cameras = [];
   bool isLoading = true;
   Timer? _timer;
+  Timer? _uiRefreshTimer; // Timer untuk refresh UI waktu real-time
+  final Map<String, String> _alertTimestamps = {}; // Track alert timestamps
   final List<Map<String, dynamic>> alertsOld = [
     {
       'title': 'CCTV DOWN - CY1 Cam-12',
@@ -110,11 +112,18 @@ class _AlertsPageState extends State<AlertsPage> {
         _loadAlerts(); // Refresh data dari database secara real-time
       }
     });
+    // Refresh UI untuk update timestamp setiap 1 detik
+    _uiRefreshTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {}); // Trigger rebuild untuk update relative time
+      }
+    });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _uiRefreshTimer?.cancel();
     super.dispose();
   }
 
@@ -229,12 +238,21 @@ class _AlertsPageState extends State<AlertsPage> {
             route = '/network-cy3';
           }
 
+          final alertId = 'tower-${tower.id}';
+          // Gunakan updatedAt dari database sebagai timestamp (fallback ke createdAt)
+          // Ini lebih reliable daripada generate di client-side
+          final timestamp = tower.updatedAt.isNotEmpty
+              ? tower.updatedAt
+              : (tower.createdAt.isNotEmpty
+                  ? tower.createdAt
+                  : DateTime.now().toString());
+
           generatedAlerts.add(Alert(
-            id: 'tower-${tower.id}',
+            id: alertId,
             title: 'Tower DOWN - ${tower.towerId}',
             description: '${tower.location} tower offline (${tower.towerId})',
             severity: 'critical',
-            timestamp: tower.createdAt,
+            timestamp: timestamp,
             route: route,
             category: 'Tower',
           ));
@@ -243,26 +261,43 @@ class _AlertsPageState extends State<AlertsPage> {
 
       // Camera alerts
       for (final camera in fetchedCameras) {
-        if (camera.status == 'DOWN') {
+        if (isDownStatus(camera.status)) {
           String route = '/cctv';
-          if (camera.containerYard == 'CY2') {
+
+          // Check areaType first for specific areas
+          if (camera.areaType == 'Gate') {
+            route = '/cctv-gate';
+          } else if (camera.areaType == 'Parking') {
+            route = '/cctv-parking';
+          } else if (camera.containerYard == 'CY2') {
             route = '/cctv-cy2';
           } else if (camera.containerYard == 'CY3') {
             route = '/cctv-cy3';
           }
 
+          final alertId = 'camera-${camera.id}';
+          // Gunakan updatedAt dari database sebagai timestamp
+          // Ini lebih reliable daripada generate di client-side
+          final timestamp = camera.updatedAt.isNotEmpty
+              ? camera.updatedAt
+              : (camera.createdAt.isNotEmpty
+                  ? camera.createdAt
+                  : DateTime.now().toString());
+
           generatedAlerts.add(Alert(
-            id: 'camera-${camera.id}',
+            id: alertId,
             title: 'CCTV DOWN - ${camera.cameraId}',
             description:
                 '${camera.location} camera offline (${camera.cameraId})',
             severity: 'critical',
-            timestamp: camera.createdAt,
+            timestamp: timestamp,
             route: route,
             category: 'CCTV',
           ));
         }
       }
+
+      // No need for cleanup since we're using database timestamps directly
 
       setState(() {
         alerts = [...fetchedAlerts, ...generatedAlerts];
@@ -478,10 +513,15 @@ class _AlertsPageState extends State<AlertsPage> {
   }
 
   Widget _buildAlertsList(double listHeight) {
+    // Sort alerts by timestamp (newest first)
+    final sortedActiveAlerts = List<Alert>.from(activeAlerts)
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
     final towerAlerts =
-        activeAlerts.where((a) => a.category == 'Tower').toList();
-    final cctvAlerts = activeAlerts.where((a) => a.category == 'CCTV').toList();
-    final otherAlerts = activeAlerts
+        sortedActiveAlerts.where((a) => a.category == 'Tower').toList();
+    final cctvAlerts =
+        sortedActiveAlerts.where((a) => a.category == 'CCTV').toList();
+    final otherAlerts = sortedActiveAlerts
         .where((a) => a.category != 'Tower' && a.category != 'CCTV')
         .toList();
 
@@ -683,23 +723,6 @@ class _AlertsPageState extends State<AlertsPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      _getRelativeTime(alert.timestamp),
-                      style: const TextStyle(
-                        color: Colors.black38,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _getFormattedDate(alert.timestamp),
-                      style: const TextStyle(
-                        color: Colors.black38,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
                   ],
                 ),
               ),

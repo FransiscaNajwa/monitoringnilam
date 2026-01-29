@@ -185,13 +185,25 @@ class _SignUpPageState extends State<SignUpPage> {
         if (response['success'] == true) {
           // Show success message and navigate back to login
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Account created successfully! Please login.'),
-                backgroundColor: Colors.green,
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                content: const Text('Akun berhasil dibuat'),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close dialog
+                      Navigator.pushReplacementNamed(
+                          context, '/login'); // Force back to login
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
               ),
             );
-            Navigator.pop(context);
           }
         } else {
           // Show error message with detailed field error
@@ -204,10 +216,18 @@ class _SignUpPageState extends State<SignUpPage> {
           _isLoading = false;
         });
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
               content: Text('Error: $e'),
-              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
             ),
           );
         }
@@ -278,15 +298,15 @@ class _SignUpPageState extends State<SignUpPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
+                      const Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.error_outline,
                             color: Colors.red,
                             size: 24,
                           ),
-                          const SizedBox(width: 12),
-                          const Text(
+                          SizedBox(width: 12),
+                          Text(
                             'Data Tidak Valid',
                             style: TextStyle(
                               fontSize: 18,
@@ -336,7 +356,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
@@ -400,15 +420,15 @@ class _SignUpPageState extends State<SignUpPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
+                      const Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.error_outline,
                             color: Colors.red,
                             size: 24,
                           ),
-                          const SizedBox(width: 12),
-                          const Text(
+                          SizedBox(width: 12),
+                          Text(
                             'Signup Gagal',
                             style: TextStyle(
                               fontSize: 18,
@@ -679,18 +699,18 @@ class _SignUpPageState extends State<SignUpPage> {
                                       ),
                                     ],
                                   ),
-                                  child: Row(
+                                  child: const Row(
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.error_outline,
                                         color: Color(0xFFC62828),
                                         size: 24,
                                       ),
-                                      const SizedBox(width: 14),
+                                      SizedBox(width: 14),
                                       Expanded(
                                         child: Text(
-                                          'Email harus berformat @gmail.com',
-                                          style: const TextStyle(
+                                          'Format email harus "nama@gmail.com."',
+                                          style: TextStyle(
                                             color: Color(0xFF8B0000),
                                             fontSize: 15,
                                             fontWeight: FontWeight.bold,
@@ -939,7 +959,11 @@ class _SignUpPageState extends State<SignUpPage> {
 
                               // Back to Login
                               TextButton(
-                                onPressed: () => Navigator.pop(context),
+                                onPressed: () {
+                                  // Force replace route to ensure clean login page
+                                  Navigator.pushReplacementNamed(
+                                      context, '/login');
+                                },
                                 child: RichText(
                                   text: const TextSpan(
                                     children: [

@@ -149,6 +149,7 @@ class _GateCCTVPageState extends State<GateCCTVPage> {
     }
   }
 
+  @override
   Widget build(BuildContext context) {
     final isMobile = isMobileScreen(context);
     return Scaffold(

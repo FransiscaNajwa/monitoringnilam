@@ -168,7 +168,7 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
   int get totalPages => (towers.length / itemsPerPage).ceil();
 
   int get totalTowers => towers.length;
-  int get onlineTowers => towers.where((t) => t.status == 'UP').length;
+  int get onlineTowers => towers.where((t) => !isDownStatus(t.status)).length;
   int get warningTowers => towers.where((t) => isDownStatus(t.status)).length;
 
   void _showWarningList() {

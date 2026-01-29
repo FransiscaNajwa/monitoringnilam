@@ -341,8 +341,8 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   const SizedBox(height: 12),
                                   SizedBox(
-                                    width: 200,
-                                    height: 50,
+                                    width: double.infinity,
+                                    height: 55,
                                     child: ElevatedButton(
                                       onPressed: _handleSignUp,
                                       style: ElevatedButton.styleFrom(
@@ -357,7 +357,7 @@ class _LoginPageState extends State<LoginPage> {
                                       child: const Text(
                                         'Sign Up',
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
                                         ),
