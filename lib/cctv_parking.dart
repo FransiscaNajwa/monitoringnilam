@@ -123,7 +123,7 @@ class _ParkingCCTVPageState extends State<ParkingCCTVPage> {
       });
 
       final apiService = ApiService();
-      final cameras = await apiService.getCamerasByContainerYard('Parking');
+      final cameras = await apiService.getCamerasByAreaType('Parking');
 
       setState(() {
         allCameras.clear();

@@ -123,7 +123,7 @@ class _GateCCTVPageState extends State<GateCCTVPage> {
       });
 
       final apiService = ApiService();
-      final cameras = await apiService.getCamerasByContainerYard('Gate');
+      final cameras = await apiService.getCamerasByAreaType('Gate');
 
       setState(() {
         allCameras.clear();
