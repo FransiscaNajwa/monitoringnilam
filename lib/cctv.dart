@@ -239,6 +239,22 @@ class _CCTVPageState extends State<CCTVPage> {
                     _buildHeaderOpenButton('Alerts', '/alerts',
                         isActive: false),
                     _buildHeaderLogoutButton(),
+                    // Fullscreen Button Mobile
+                    GestureDetector(
+                      onTap: () => navigateWithLoading(context, '/cctv-fullscreen'),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        child: const Icon(
+                          Icons.fullscreen,
+                          color: Color(0xFF1976D2),
+                          size: 20,
+                        ),
+                      ),
+                    ),
                   ],
                 )
               ],
@@ -264,6 +280,33 @@ class _CCTVPageState extends State<CCTVPage> {
                 _buildHeaderOpenButton('Alerts', '/alerts', isActive: false),
                 const SizedBox(width: 12),
                 _buildHeaderLogoutButton(),
+                const SizedBox(width: 12),
+                // Fullscreen Icon Button
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => navigateWithLoading(context, '/cctv-fullscreen'),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(50),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.fullscreen,
+                        color: Color(0xFF1976D2),
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 MouseRegion(
                   cursor: SystemMouseCursors.click,

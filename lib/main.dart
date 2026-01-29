@@ -10,6 +10,7 @@ import 'cctv_cy2.dart';
 import 'cctv_cy3.dart';
 import 'cctv_parking.dart';
 import 'cctv_gate.dart';
+import 'cctv_fullscreen.dart';
 import 'alerts.dart';
 import 'login.dart';
 import 'signup.dart';
@@ -423,8 +424,9 @@ class MyApp extends StatelessWidget {
         '/cctv': (context) => const CCTVPage(),
         '/cctv-cy2': (context) => const CCTVCy2Page(),
         '/cctv-cy3': (context) => const CCTVCy3Page(),
-        '/parking-cctv': (context) => const ParkingCCTVPage(),
-        '/gate-cctv': (context) => const GateCCTVPage(),
+        '/cctv-gate': (context) => const GateCCTVPage(),
+        '/cctv-parking': (context) => const ParkingCCTVPage(),
+        '/cctv-fullscreen': (context) => const CCTVFullscreenPage(),
         '/alerts': (context) => const AlertsPage(),
         '/profile': (context) => const ProfilePage(),
         '/edit-profile': (context) => const EditProfilePage(),
