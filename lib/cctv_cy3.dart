@@ -243,22 +243,6 @@ class _CCTVCy3PageState extends State<CCTVCy3Page> {
                     _buildHeaderOpenButton('Alerts', '/alerts',
                         isActive: false),
                     _buildHeaderLogoutButton(),
-                    // Fullscreen Button Mobile
-                    GestureDetector(
-                      onTap: () => navigateWithLoading(context, '/cctv-fullscreen'),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        child: const Icon(
-                          Icons.fullscreen,
-                          color: Color(0xFF1976D2),
-                          size: 20,
-                        ),
-                      ),
-                    ),
                   ],
                 )
               ],
@@ -283,33 +267,6 @@ class _CCTVCy3PageState extends State<CCTVCy3Page> {
                 _buildHeaderOpenButton('Alerts', '/alerts'),
                 const SizedBox(width: 12),
                 _buildHeaderLogoutButton(),
-                const SizedBox(width: 12),
-                // Fullscreen Icon Button
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => navigateWithLoading(context, '/cctv-fullscreen'),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(50),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.fullscreen,
-                        color: Color(0xFF1976D2),
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ),
                 const SizedBox(width: 12),
                 // Profile icon shortcut to profile page
                 MouseRegion(
@@ -388,7 +345,7 @@ class _CCTVCy3PageState extends State<CCTVCy3Page> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           children: [
             Icon(Icons.videocam, size: 40, color: Colors.white),
             SizedBox(width: 16),
@@ -412,6 +369,31 @@ class _CCTVCy3PageState extends State<CCTVCy3Page> {
                   ),
                 ),
               ],
+            ),
+            Spacer(),
+            // Fullscreen Button
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () =>
+                    navigateWithLoading(context, '/cctv-fullscreen'),
+                child: Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.fullscreen,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
             ),
           ],
         ),

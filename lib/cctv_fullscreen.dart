@@ -49,8 +49,9 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
             .toList();
         // Sort by container yard, then area type, then camera id
         camerasMap.sort((a, b) {
-          int cmpYard =
-              a['containerYard'].toString().compareTo(b['containerYard']);
+          int cmpYard = a['containerYard']
+              .toString()
+              .compareTo(b['containerYard'].toString());
           if (cmpYard != 0) return cmpYard;
           int cmpArea =
               a['areaType'].toString().compareTo(b['areaType'].toString());
@@ -222,8 +223,8 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
         // Stats Section
         Row(
           children: [
-            _buildStatCard('TOTAL CCTV', totalCameras.toString(),
-                Colors.blue, constraints.maxWidth * 0.3),
+            _buildStatCard('TOTAL CCTV', totalCameras.toString(), Colors.blue,
+                constraints.maxWidth * 0.3),
             const SizedBox(width: 20),
             _buildStatCard('UP', upCameras.toString(), Colors.green,
                 constraints.maxWidth * 0.3),
@@ -331,8 +332,7 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.videocam_off_rounded,
-                  size: 64, color: Colors.grey),
+              Icon(Icons.videocam_off_rounded, size: 64, color: Colors.grey),
               SizedBox(height: 16),
               Text(
                 'No CCTV cameras found',
