@@ -492,7 +492,7 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
                 Row(
                   children: [
                     const Text(
-                      'Real time network infrastructure monitoring',
+                      'Real time tower monitoring and diagnostics - CY 3',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 14,

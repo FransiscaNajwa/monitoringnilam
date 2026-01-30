@@ -545,7 +545,7 @@ class _NetworkPageState extends State<NetworkPage> {
                   Row(
                     children: [
                       const Text(
-                        'Real time network infrastructure monitoring',
+                        'Real time tower monitoring and diagnostics - CY 1',
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 14,
