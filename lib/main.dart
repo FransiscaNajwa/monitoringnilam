@@ -17,6 +17,7 @@ import 'signup.dart';
 import 'profile.dart';
 import 'edit_profile.dart';
 import 'change_password.dart';
+import 'add_device.dart';
 
 void main() {
   runApp(const MyApp());
@@ -412,12 +413,19 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         fontFamily: 'Arial',
       ),
-      initialRoute: '/login',
+      initialRoute: '/dashboard',
+      onGenerateInitialRoutes: (_) => [
+        MaterialPageRoute(
+          builder: (context) => const DashboardPage(),
+          settings: const RouteSettings(name: '/dashboard'),
+        ),
+      ],
       routes: {
         '/login': (context) => const LoginPage(),
         '/signup': (context) => const SignUpPage(),
         '/': (context) => const DashboardPage(),
         '/dashboard': (context) => const DashboardPage(),
+        '/add-device': (context) => const AddDevicePage(),
         '/network': (context) => const NetworkPage(),
         '/network-cy2': (context) => const NetworkCY2Page(),
         '/network-cy3': (context) => const NetworkCY3Page(),

@@ -5,6 +5,7 @@ import 'main.dart';
 import 'services/api_service.dart';
 import 'models/tower_model.dart';
 import 'route_proxy_page.dart';
+import 'add_device.dart';
 import 'utils/tower_status_override.dart';
 
 // Network Page CY 3
@@ -40,8 +41,11 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
   }
 
   void _startAutoRefresh() {
-    _refreshTimer = Timer.periodic(const Duration(minutes: 5), (timer) {
-      _loadTowers();
+    // Refresh setiap 10 detik untuk monitoring realtime
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        _loadTowers();
+      }
     });
   }
 
@@ -352,10 +356,11 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
                   spacing: 4,
                   runSpacing: 4,
                   children: [
+                    _buildHeaderOpenButton('+ Add Device', '/add-device',
+                        isActive: false),
                     _buildHeaderOpenButton('Dashboard', '/dashboard',
                         isActive: false),
-                    _buildHeaderOpenButton('Tower', '/network',
-                        isActive: true),
+                    _buildHeaderOpenButton('Tower', '/network', isActive: true),
                     _buildHeaderOpenButton('CCTV', '/cctv', isActive: false),
                     _buildHeaderOpenButton('Alerts', '/alerts',
                         isActive: false),
@@ -375,6 +380,9 @@ class _NetworkCY3PageState extends State<NetworkCY3Page> {
                   ),
                 ),
                 const Spacer(),
+                _buildHeaderOpenButton('+ Add Device', '/add-device',
+                    isActive: false),
+                const SizedBox(width: 12),
                 _buildHeaderOpenButton('Dashboard', '/dashboard',
                     isActive: false),
                 const SizedBox(width: 12),

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
 import '../models/tower_model.dart';
 import '../models/camera_model.dart';
+import '../models/mmt_model.dart';
 import '../models/alert_model.dart';
 
 class ApiService {
@@ -196,6 +197,66 @@ class ApiService {
         return jsonDecode(response.body);
       } else {
         return {'success': false, 'message': 'Gagal mengubah password'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> requestEmailChangeOtp(
+      int userId, String newEmail) async {
+    try {
+      print('=== API: Request Email Change OTP ===');
+      print('URL: $baseUrl?endpoint=auth&action=request-email-otp');
+      print('User ID: $userId');
+      print('New Email: $newEmail');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl?endpoint=auth&action=request-email-otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': userId,
+          'new_email': newEmail,
+        }),
+      );
+
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('Decoded Response: $data');
+        return data;
+      } else {
+        print('Failed with status code: ${response.statusCode}');
+        return {
+          'success': false,
+          'message': 'Gagal meminta OTP (Status: ${response.statusCode})'
+        };
+      }
+    } catch (e) {
+      print('Exception in requestEmailChangeOtp: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> verifyEmailChangeOtp(
+      int userId, String newEmail, String otp) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl?endpoint=auth&action=verify-email-otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': userId,
+          'new_email': newEmail,
+          'otp': otp,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'success': false, 'message': 'Gagal verifikasi OTP'};
       }
     } catch (e) {
       return {'success': false, 'message': 'Error: $e'};
@@ -533,6 +594,113 @@ class ApiService {
     } catch (e) {
       print('Error fetching CCTV stats: $e');
       return {};
+    }
+  }
+
+  // ==================== MMT ENDPOINTS ====================
+
+  Future<List<MMT>> getAllMMTs() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl?endpoint=mmt&action=all'),
+      );
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        if (json['success'] == true && json['data'] != null) {
+          List<MMT> mmts = (json['data'] as List)
+              .map((item) => MMT.fromJson(item as Map<String, dynamic>))
+              .toList();
+          return mmts;
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching MMTs: $e');
+      return [];
+    }
+  }
+
+  Future<List<MMT>> getMMTsByContainerYard(String containerYard) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            '$baseUrl?endpoint=mmt&action=by-yard&container_yard=$containerYard'),
+      );
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        if (json['success'] == true && json['data'] != null) {
+          List<MMT> mmts = (json['data'] as List)
+              .map((item) => MMT.fromJson(item as Map<String, dynamic>))
+              .toList();
+          return mmts;
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching MMTs by yard: $e');
+      return [];
+    }
+  }
+
+  Future<MMT?> getMMTById(int mmtId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl?endpoint=mmt&action=by-id&mmt_id=$mmtId'),
+      );
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        if (json['success'] == true && json['data'] != null) {
+          return MMT.fromJson(json['data']);
+        }
+      }
+      return null;
+    } catch (e) {
+      print('Error fetching MMT: $e');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> getMMTStats() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl?endpoint=mmt&action=stats'),
+      );
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        if (json['success'] == true && json['data'] != null) {
+          return json['data'];
+        }
+      }
+      return {};
+    } catch (e) {
+      print('Error fetching MMT stats: $e');
+      return {};
+    }
+  }
+
+  Future<Map<String, dynamic>> updateMMTStatus(
+      String mmtId, String status) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl?endpoint=mmt&action=update-status'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'mmt_id': mmtId,
+          'status': status,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'success': false, 'message': 'Failed to update MMT status'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 

@@ -2,9 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
+import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'route_proxy_page.dart';
 import 'services/api_service.dart';
+import 'add_device.dart';
+import 'utils/tower_status_override.dart';
 
 // CCTV Page CY 1
 class CCTVPage extends StatefulWidget {
@@ -116,8 +119,11 @@ class _CCTVPageState extends State<CCTVPage> {
   void initState() {
     super.initState();
     _loadCameras();
-    _refreshTimer = Timer.periodic(const Duration(minutes: 5), (timer) {
-      _loadCameras();
+    // Refresh setiap 10 detik untuk monitoring realtime
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        _loadCameras();
+      }
     });
   }
 
@@ -129,10 +135,11 @@ class _CCTVPageState extends State<CCTVPage> {
 
       final apiService = ApiService();
       final cameras = await apiService.getCamerasByContainerYard('CY1');
+      final updatedCameras = applyForcedCameraStatus(cameras);
 
       setState(() {
         allCameras.clear();
-        allCameras.addAll(cameras
+        allCameras.addAll(updatedCameras
             .map((c) => {
                   'id': c.cameraId,
                   'location': c.location,
@@ -149,6 +156,21 @@ class _CCTVPageState extends State<CCTVPage> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> _triggerPingCheck() async {
+    try {
+      const baseUrl = 'http://localhost/monitoring_api/index.php';
+      await http.get(
+        Uri.parse('$baseUrl?endpoint=realtime&type=all'),
+      );
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) {
+        await _loadCameras();
+      }
+    } catch (e) {
+      print('Error triggering ping check: $e');
     }
   }
 
@@ -244,6 +266,8 @@ class _CCTVPageState extends State<CCTVPage> {
                   spacing: 4,
                   runSpacing: 4,
                   children: [
+                    _buildHeaderOpenButton('+ Add Device', '/add-device',
+                        isActive: false),
                     _buildHeaderOpenButton('Dashboard', '/dashboard',
                         isActive: false),
                     _buildHeaderOpenButton('Tower', '/network',
@@ -282,6 +306,9 @@ class _CCTVPageState extends State<CCTVPage> {
                   ],
                 ),
                 const Spacer(),
+                _buildHeaderOpenButton('+ Add Device', '/add-device',
+                    isActive: false),
+                const SizedBox(width: 12),
                 _buildHeaderOpenButton('Dashboard', '/dashboard',
                     isActive: false),
                 const SizedBox(width: 12),

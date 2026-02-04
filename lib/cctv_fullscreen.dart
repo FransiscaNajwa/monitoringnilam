@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
+import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'route_proxy_page.dart';
 import 'services/api_service.dart';
+import 'add_device.dart';
+import 'utils/tower_status_override.dart';
 
 // Fullscreen CCTV Page - All Areas
 class CCTVFullscreenPage extends StatefulWidget {
@@ -34,10 +37,11 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
 
       final apiService = ApiService();
       final cameras = await apiService.getAllCameras();
+      final updatedCameras = applyForcedCameraStatus(cameras);
 
       setState(() {
         allCameras.clear();
-        final camerasMap = cameras
+        final camerasMap = updatedCameras
             .map((c) => {
                   'id': c.cameraId,
                   'location': c.location,
@@ -66,6 +70,21 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> _triggerPingCheck() async {
+    try {
+      const baseUrl = 'http://localhost/monitoring_api/index.php';
+      await http.get(
+        Uri.parse('$baseUrl?endpoint=realtime&type=all'),
+      );
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) {
+        await _loadAllCameras();
+      }
+    } catch (e) {
+      print('Error triggering ping check: $e');
     }
   }
 
@@ -118,6 +137,9 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
+                      _buildHeaderOpenButton('+ Add Device', '/add-device',
+                          isActive: false),
+                      const SizedBox(width: 8),
                       _buildHeaderOpenButton('Dashboard', '/dashboard',
                           isActive: false),
                       const SizedBox(width: 8),
@@ -180,6 +202,9 @@ class _CCTVFullscreenPageState extends State<CCTVFullscreenPage> {
                     ),
                   ),
                 ),
+                const SizedBox(width: 12),
+                _buildHeaderOpenButton('+ Add Device', '/add-device',
+                    isActive: false),
                 const SizedBox(width: 12),
                 _buildHeaderOpenButton('Dashboard', '/dashboard',
                     isActive: false),

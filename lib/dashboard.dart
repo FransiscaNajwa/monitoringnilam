@@ -1,15 +1,20 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'services/api_service.dart';
 import 'models/camera_model.dart';
 import 'models/tower_model.dart';
 import 'models/alert_model.dart';
+import 'models/device_model.dart';
 import 'network.dart';
 import 'cctv.dart';
 import 'alerts.dart';
 import 'profile.dart';
+import 'add_device.dart';
+import 'services/device_storage_service.dart';
 import 'utils/tower_status_override.dart';
 
 // Konstanta lokasi TPK Nilam - sesuai layout gambar
@@ -341,6 +346,8 @@ class _DashboardPageState extends State<DashboardPage> {
   List<Camera> cameras = [];
   List<Tower> towers = [];
   List<Alert> alerts = [];
+  List<AddedDevice> addedDevices = [];
+  Timer? _refreshTimer;
   int totalUpCameras = 0;
   int totalDownCameras = 0;
   int totalOnlineTowers = 0;
@@ -364,6 +371,17 @@ class _DashboardPageState extends State<DashboardPage> {
     mapController = MapController();
     apiService = ApiService();
     _loadDashboardData();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        _loadDashboardData();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadDashboardData() async {
@@ -375,6 +393,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       // Apply forced status overrides before generating alerts
       final updatedTowers = applyForcedTowerStatus(fetchedTowers);
+      final updatedCameras = applyForcedCameraStatus(fetchedCameras);
 
       // Auto-generate DOWN alerts so the dashboard card matches Alerts page
       final generatedAlerts = <Alert>[];
@@ -406,7 +425,7 @@ class _DashboardPageState extends State<DashboardPage> {
         }
       }
 
-      for (final camera in fetchedCameras) {
+      for (final camera in updatedCameras) {
         if (isDownStatus(camera.status)) {
           String route = '/cctv';
           if (camera.containerYard == 'CY2') {
@@ -433,9 +452,11 @@ class _DashboardPageState extends State<DashboardPage> {
           ));
         }
       }
+      // Load added devices from storage
+      final devices = await DeviceStorageService.getDevices();
 
       setState(() {
-        cameras = fetchedCameras;
+        cameras = updatedCameras;
         totalUpCameras = cameras.where((c) => !isDownStatus(c.status)).length;
         totalDownCameras = cameras.where((c) => isDownStatus(c.status)).length;
 
@@ -444,9 +465,29 @@ class _DashboardPageState extends State<DashboardPage> {
         totalTowers = towers.length;
 
         alerts = [...fetchedAlerts, ...generatedAlerts];
+        addedDevices = devices;
       });
     } catch (e) {
       print('Error loading dashboard data: $e');
+    }
+  }
+
+  Future<void> _triggerPingCheck() async {
+    try {
+      const baseUrl = 'http://localhost/monitoring_api/index.php';
+
+      // Call realtime ping endpoint yang update semua towers dan cameras sekaligus
+      final response = await http.get(
+        Uri.parse('$baseUrl?endpoint=realtime&type=all'),
+      );
+
+      // Wait a moment for database to update
+      await Future.delayed(const Duration(seconds: 1));
+
+      print('Realtime ping check completed: ${response.statusCode}');
+    } catch (e) {
+      print('Error triggering ping check: $e');
+      rethrow;
     }
   }
 
@@ -474,6 +515,34 @@ class _DashboardPageState extends State<DashboardPage> {
   Color _getTowerColor(TowerPoint point) {
     final status = _getTowerStatusForPoint(point);
     return isDownStatus(status) ? Colors.red : const Color(0xFF2196F3);
+  }
+
+  // Get icon untuk added device
+  IconData _getDeviceIcon(String deviceType) {
+    switch (deviceType) {
+      case 'Tower':
+        return Icons.router;
+      case 'CCTV':
+        return Icons.videocam;
+      case 'MMT':
+        return Icons.table_chart;
+      default:
+        return Icons.device_unknown;
+    }
+  }
+
+  // Get color untuk device berdasarkan tipe
+  Color _getDeviceColor(String deviceType) {
+    switch (deviceType) {
+      case 'Tower':
+        return const Color(0xFF9C27B0); // Purple untuk tower
+      case 'CCTV':
+        return const Color(0xFF00BCD4); // Cyan untuk CCTV
+      case 'MMT':
+        return const Color(0xFFFF9800); // Orange untuk MMT
+      default:
+        return Colors.grey;
+    }
   }
 
   int get totalCameras => totalUpCameras + totalDownCameras;
@@ -505,6 +574,22 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF2C3E50),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          // Reload devices dan data dashboard
+          await _loadDashboardData();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Data berhasil diperbarui'),
+                duration: Duration(seconds: 1),
+              ),
+            );
+          }
+        },
+        backgroundColor: const Color(0xFF1976D2),
+        child: const Icon(Icons.refresh),
+      ),
       body: Column(
         children: [
           // Header
@@ -613,6 +698,8 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
           const Spacer(),
+          _buildHeaderOpenButton('+ Add Device', const AddDevicePage()),
+          const SizedBox(width: 12),
           _buildHeaderOpenButton('Dashboard', const DashboardPage(),
               isActive: true),
           const SizedBox(width: 12),
@@ -1054,6 +1141,40 @@ class _DashboardPageState extends State<DashboardPage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              const Spacer(),
+              // Tombol Check Status Now
+              ElevatedButton.icon(
+                onPressed: () async {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Checking status...'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  await _triggerPingCheck();
+                  await _loadDashboardData();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('✓ Status updated!'),
+                        backgroundColor: Colors.green,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Check Status'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4CAF50),
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -1154,44 +1275,31 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                               )),
 
-                          // Tower/Access Points - Marker dengan angka (warna berubah sesuai status)
-                          ...towerPoints.map((tower) => Marker(
-                                point: tower.coordinate,
-                                width: 48,
-                                height: 48,
+                          // Added Devices - Device yang ditambahkan user
+                          ...addedDevices.map((device) => Marker(
+                                point: device.coordinate,
+                                width: 50,
+                                height: 50,
                                 child: GestureDetector(
                                   onTap: () {
-                                    // Navigate to appropriate CY page
-                                    String route = '/network';
-                                    if (tower.containerYard == 'CY2') {
-                                      route = '/network-cy2';
-                                    } else if (tower.containerYard == 'CY3') {
-                                      route = '/network-cy3';
-                                    }
-
-                                    final status =
-                                        _getTowerStatusForPoint(tower);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                            '${tower.name} - ${tower.containerYard} - $status'),
+                                            '${device.name} (${device.type}) - ${device.locationName}'),
                                         duration: const Duration(seconds: 2),
-                                        backgroundColor: isDownStatus(status)
-                                            ? Colors.red
-                                            : Colors.blue,
+                                        backgroundColor:
+                                            _getDeviceColor(device.type),
                                       ),
                                     );
-
-                                    navigateWithLoading(context, route);
                                   },
                                   child: MouseRegion(
                                     cursor: SystemMouseCursors.click,
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: _getTowerColor(tower),
+                                        color: _getDeviceColor(device.type),
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                            color: Colors.white, width: 3),
+                                            color: Colors.white, width: 2),
                                         boxShadow: [
                                           BoxShadow(
                                             color:
@@ -1202,14 +1310,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                         ],
                                       ),
                                       child: Center(
-                                        child: Text(
-                                          tower.label,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                        child: Icon(
+                                          _getDeviceIcon(device.type),
+                                          color: Colors.white,
+                                          size: 24,
                                         ),
                                       ),
                                     ),
@@ -1278,6 +1382,23 @@ class _DashboardPageState extends State<DashboardPage> {
                                   ),
                                 ),
                               )),
+
+                          // Tower/Access Points - Icon Tower Hitam (ADDED LAST - APPEARS ON TOP)
+                          ...towerPoints.map((point) {
+                            return Marker(
+                              point: point.coordinate,
+                              width: 40,
+                              height: 40,
+                              child: Tooltip(
+                                message: point.name,
+                                child: const Icon(
+                                  Icons.router,
+                                  color: Colors.black,
+                                  size: 36,
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ],
                       ),
                     ],

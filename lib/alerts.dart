@@ -6,6 +6,7 @@ import 'services/api_service.dart';
 import 'models/alert_model.dart';
 import 'models/tower_model.dart';
 import 'models/camera_model.dart';
+import 'add_device.dart';
 import 'utils/tower_status_override.dart';
 import 'route_proxy_page.dart';
 
@@ -106,8 +107,8 @@ class _AlertsPageState extends State<AlertsPage> {
     super.initState();
     apiService = ApiService();
     _loadAlerts();
-    // Auto-refresh data dari database dan update UI setiap 30 detik
-    _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    // Auto-refresh data dari database dan update UI setiap 10 detik untuk monitoring realtime
+    _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (mounted) {
         _loadAlerts(); // Refresh data dari database secara real-time
       }
@@ -222,8 +223,9 @@ class _AlertsPageState extends State<AlertsPage> {
       final fetchedTowers = await apiService.getAllTowers();
       final fetchedCameras = await apiService.getAllCameras();
 
-      // Apply forced tower status
+      // Apply forced status overrides
       final updatedTowers = applyForcedTowerStatus(fetchedTowers);
+      final updatedCameras = applyForcedCameraStatus(fetchedCameras);
 
       // Generate alerts from DOWN towers and cameras
       final generatedAlerts = <Alert>[];
@@ -260,7 +262,7 @@ class _AlertsPageState extends State<AlertsPage> {
       }
 
       // Camera alerts
-      for (final camera in fetchedCameras) {
+      for (final camera in updatedCameras) {
         if (isDownStatus(camera.status)) {
           String route = '/cctv';
 
@@ -302,7 +304,7 @@ class _AlertsPageState extends State<AlertsPage> {
       setState(() {
         alerts = [...fetchedAlerts, ...generatedAlerts];
         towers = updatedTowers;
-        cameras = fetchedCameras;
+        cameras = updatedCameras;
         isLoading = false;
       });
     } catch (e) {
@@ -362,6 +364,9 @@ class _AlertsPageState extends State<AlertsPage> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
+                      _buildHeaderOpenButton('+ Add Device', '/add-device',
+                          isActive: false),
+                      const SizedBox(width: 8),
                       _buildHeaderOpenButton('Dashboard', '/dashboard',
                           isActive: false),
                       const SizedBox(width: 8),
@@ -424,6 +429,9 @@ class _AlertsPageState extends State<AlertsPage> {
                     ),
                   ),
                 ),
+                const SizedBox(width: 12),
+                _buildHeaderOpenButton('+ Add Device', '/add-device',
+                    isActive: false),
                 const SizedBox(width: 12),
                 _buildHeaderOpenButton('Dashboard', '/dashboard',
                     isActive: false),
